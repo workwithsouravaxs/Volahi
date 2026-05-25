@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2C2220; /* Sophisticated Warm Espresso/Charcoal */
+  --color-secondary: #6E5C59; /* Elegant Warm Taupe */
+  --color-cta: #D28C81; /* Premium Rose Gold Blush Accent */
+  --color-accent: #E5B2A8; /* Chic Champagne Rose */
+  --color-background: #FFFDFD; /* Pure Ivory White */
+  --color-text: #2C2220;
+
+  --font-heading: var(--font-poppins), sans-serif;
+  --font-body: var(--font-poppins), sans-serif;
+
+  --shadow-sm: 0 1px 2px rgba(44, 34, 32, 0.05);
+  --shadow-md: 0 4px 6px rgba(44, 34, 32, 0.05);
+  --shadow-lg: 0 10px 15px rgba(210, 140, 129, 0.08);
+  --shadow-xl: 0 20px 25px rgba(210, 140, 129, 0.1);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-sm border border-neutral-100 transition-all duration-500;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white px-10 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 cursor-pointer hover:bg-cta active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-primary border border-primary px-10 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 cursor-pointer hover:bg-primary hover:text-white active:scale-95;
+  }
+
+  .input-field {
+    @apply px-4 py-3 border border-neutral-200 focus:outline-none focus:border-primary transition-all duration-300;
+  }
+
+  /* Sharpness Enforcement */
+  * {
+    border-radius: 0 !important;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #FFFDFD;
+}
+::-webkit-scrollbar-thumb {
+  background: #D28C81; /* Rose Gold Scrollbar */
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2C2220;
+}
