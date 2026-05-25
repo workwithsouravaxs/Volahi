@@ -875,6 +875,7 @@ export default function AdminDashboard() {
                             o.status === 'Pending Approval' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
                             o.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
                             o.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                            o.status === 'Cancelled' ? 'bg-orange-100 text-orange-800' :
                             o.status === 'Processing' ? 'bg-amber-100 text-amber-800' :
                             o.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
                             'bg-green-100 text-green-800'
@@ -893,7 +894,20 @@ export default function AdminDashboard() {
                           )}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {o.status === 'Pending Approval' ? (
+                          {/* Cancelled orders — locked, no further actions */}
+                          {o.status === 'Cancelled' ? (
+                            <div className="flex justify-end">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-50 border border-orange-200 text-orange-700 rounded text-[9px] font-bold uppercase tracking-widest">
+                                🔒 Cancelled by Customer
+                              </span>
+                            </div>
+                          ) : o.status === 'Rejected' ? (
+                            <div className="flex justify-end">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 border border-red-200 text-red-700 rounded text-[9px] font-bold uppercase tracking-widest">
+                                Rejected
+                              </span>
+                            </div>
+                          ) : o.status === 'Pending Approval' ? (
                             <div className="flex gap-2 justify-end">
                               <button 
                                 onClick={() => updateOrderStatus(o.id, 'Processing')}
@@ -903,8 +917,8 @@ export default function AdminDashboard() {
                               </button>
                               <button 
                                 onClick={() => {
-                                  if (confirm("Are you sure you want to reject this order? Rejecting it will permanently delete the order from both user and admin panels.")) {
-                                    deleteOrder(o.id);
+                                  if (confirm("Are you sure you want to reject this order? The customer will see it as Rejected in their order history.")) {
+                                    updateOrderStatus(o.id, 'Rejected');
                                   }
                                 }}
                                 className="px-2.5 py-1.5 bg-red-600 text-white rounded text-[9px] font-bold uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95"
@@ -918,11 +932,7 @@ export default function AdminDashboard() {
                                 value={o.status}
                                 onChange={(e) => {
                                   const nextStatus = e.target.value as any;
-                                  if (nextStatus === 'Rejected') {
-                                    if (confirm("Are you sure you want to reject this order? Rejecting it will permanently delete the order from both user and admin panels.")) {
-                                      deleteOrder(o.id);
-                                    }
-                                  } else if (nextStatus === 'Shipped') {
+                                  if (nextStatus === 'Shipped') {
                                     const url = prompt("Enter the Dispatch Tracking URL Link for this order:", o.trackingUrl || "");
                                     updateOrderStatus(o.id, nextStatus, url || undefined);
                                   } else {
@@ -932,7 +942,6 @@ export default function AdminDashboard() {
                                 className="bg-transparent border border-slate-200 text-[10px] uppercase font-bold tracking-wider rounded p-1.5 focus:outline-none"
                               >
                                 <option value="Approved">Approved</option>
-                                <option value="Rejected">Rejected</option>
                                 <option value="Processing">Processing</option>
                                 <option value="Shipped">Shipped</option>
                                 <option value="Delivered">Delivered</option>

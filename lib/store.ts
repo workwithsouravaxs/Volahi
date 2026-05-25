@@ -93,7 +93,7 @@ export interface Order {
   tax: number;
   shipping: number;
   total: number;
-  status: 'Pending Approval' | 'Approved' | 'Rejected' | 'Processing' | 'Shipped' | 'Delivered';
+  status: 'Pending Approval' | 'Approved' | 'Rejected' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   trackingUrl?: string;
   date: string;
 }

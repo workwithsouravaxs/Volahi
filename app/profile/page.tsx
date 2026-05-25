@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function CustomerProfile() {
   const router = useRouter();
-  const { currentUser, logoutUser, orders, deleteOrder } = useVolahiStore();
+  const { currentUser, logoutUser, orders, deleteOrder, updateOrderStatus } = useVolahiStore();
 
   React.useEffect(() => {
     if (!currentUser) {
@@ -94,8 +94,8 @@ export default function CustomerProfile() {
                         <div>
                           <button
                             onClick={() => {
-                              if (confirm("Are you sure you want to cancel this couture order? This will permanently delete your order records.")) {
-                                deleteOrder(order.id);
+                              if (confirm("Are you sure you want to cancel this couture order? This action cannot be undone.")) {
+                                updateOrderStatus(order.id, 'Cancelled');
                               }
                             }}
                             className="px-3 py-1.5 border border-red-200 hover:bg-red-50 text-red-600 rounded text-[9px] font-bold uppercase tracking-widest transition-colors hover:border-red-300 active:scale-95"
@@ -117,10 +117,18 @@ export default function CustomerProfile() {
                       </div>
                     ) : order.status === 'Rejected' ? (
                       <div className="p-5 bg-red-50/50 border border-red-100 text-center rounded space-y-2">
-                        <span className="inline-block px-2 py-0.5 bg-red-100 text-red-700 text-[8px] font-bold uppercase tracking-widest rounded-sm">Canceled</span>
+                        <span className="inline-block px-2 py-0.5 bg-red-100 text-red-700 text-[8px] font-bold uppercase tracking-widest rounded-sm">Rejected</span>
                         <h4 className="text-sm font-heading font-medium tracking-tight uppercase text-red-800">Acquisition Declined</h4>
                         <p className="text-red-600/70 text-[10px] tracking-wider leading-relaxed max-w-md mx-auto">
-                          This acquisition transaction has been declined by the atelier directors. Please connect with dynamic client services.
+                          This order has been declined by the atelier directors. Please connect with our client services for assistance.
+                        </p>
+                      </div>
+                    ) : order.status === 'Cancelled' ? (
+                      <div className="p-5 bg-orange-50/50 border border-orange-100 text-center rounded space-y-2">
+                        <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-700 text-[8px] font-bold uppercase tracking-widest rounded-sm">Cancelled</span>
+                        <h4 className="text-sm font-heading font-medium tracking-tight uppercase text-orange-800">Order Cancelled by You</h4>
+                        <p className="text-orange-600/70 text-[10px] tracking-wider leading-relaxed max-w-md mx-auto">
+                          You have cancelled this couture acquisition. This record is kept for your reference.
                         </p>
                       </div>
                     ) : (
