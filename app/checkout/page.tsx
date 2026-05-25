@@ -22,6 +22,34 @@ export default function CheckoutPage() {
   const [generatedId, setGeneratedId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  if (!currentUser) {
+    return (
+      <main className="min-h-screen bg-[#FFF9F7] flex items-center justify-center font-body text-primary p-6">
+        <Navbar />
+        <div className="w-full max-w-xl bg-white border border-neutral-100 p-12 text-center shadow-xl space-y-8 rounded">
+          <ShieldCheck className="w-16 h-16 text-cta mx-auto" />
+          
+          <div className="space-y-3">
+            <span className="text-[9px] text-cta font-bold uppercase tracking-[0.4em]">Atelier Authentication Required</span>
+            <h2 className="text-4xl font-heading uppercase tracking-tighter">Client Account Required</h2>
+            <p className="text-neutral-400 text-xs tracking-wider max-w-sm mx-auto leading-relaxed">
+              To secure your couture acquisitions, manage tracking allocations, and register designer warranties, you must log in or sign up first.
+            </p>
+          </div>
+
+          <div className="pt-6 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/auth?redirect=checkout" className="btn-primary py-4 px-8 text-[10px] font-bold tracking-widest uppercase bg-primary text-white hover:bg-neutral-800 transition-all rounded">
+              Sign In or Register
+            </Link>
+            <Link href="/products" className="border border-neutral-200 py-4 px-8 text-[10px] font-bold tracking-widest uppercase hover:bg-neutral-50 transition-all rounded">
+              Explore Couture
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const subtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
   const shipping = subtotal > 15000 ? 0 : 499;
   const tax = subtotal * 0.12;

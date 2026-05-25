@@ -110,7 +110,7 @@ export async function verifyAdmin(email: string, pass: string): Promise<boolean>
 
 // ==================== DB SYNC OPERATIONS & MODEL MAPPINGS ====================
 
-import { Product, Banner } from './store';
+import { Product, Banner, Order } from './store';
 
 // Product Serialization Helpers
 const mapToProduct = (dbRow: any): Product => ({
@@ -370,6 +370,108 @@ export async function setDbMiddleBanner(b: Banner | null): Promise<boolean> {
     return true;
   } catch (err) {
     console.error('[Supabase DB] Exception setting middle banner:', err);
+    return false;
+  }
+}
+
+// ==================== DB ORDER SYNC OPERATIONS & MODEL MAPPINGS ====================
+
+// Order Serialization Helpers
+const mapToOrder = (dbRow: any): Order => ({
+  id: dbRow.id,
+  customerEmail: dbRow.customer_email,
+  customerName: dbRow.customer_name,
+  shippingDetails: {
+    address: dbRow.shipping_address,
+    city: dbRow.shipping_city,
+    zipCode: dbRow.shipping_zip,
+    phone: dbRow.shipping_phone,
+  },
+  items: Array.isArray(dbRow.items) ? dbRow.items : JSON.parse(dbRow.items || '[]'),
+  subtotal: Number(dbRow.subtotal),
+  tax: Number(dbRow.tax),
+  shipping: Number(dbRow.shipping),
+  total: Number(dbRow.total),
+  status: dbRow.status,
+  trackingUrl: dbRow.tracking_url || undefined,
+  date: dbRow.order_date,
+});
+
+const mapToDbOrder = (o: Order) => ({
+  id: o.id,
+  customer_email: o.customerEmail,
+  customer_name: o.customerName,
+  shipping_address: o.shippingDetails.address,
+  shipping_city: o.shippingDetails.city,
+  shipping_zip: o.shippingDetails.zipCode,
+  shipping_phone: o.shippingDetails.phone,
+  items: Array.isArray(o.items) ? o.items : [],
+  subtotal: o.subtotal,
+  tax: o.tax,
+  shipping: o.shipping,
+  total: o.total,
+  status: o.status,
+  tracking_url: o.trackingUrl || null,
+  order_date: o.date,
+});
+
+// Orders DB Operations
+export async function fetchDbOrders(): Promise<Order[]> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('[Supabase DB] Error fetching orders, fallback active:', error.message);
+      return [];
+    }
+
+    return (data || []).map(mapToOrder);
+  } catch (err) {
+    console.warn('[Supabase DB] Exception fetching orders, fallback active:', err);
+    return [];
+  }
+}
+
+export async function addDbOrder(o: Order): Promise<boolean> {
+  try {
+    const dbRow = mapToDbOrder(o);
+    const { error } = await supabase
+      .from('orders')
+      .insert([dbRow]);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to insert order:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception inserting order:', err);
+    return false;
+  }
+}
+
+export async function updateDbOrderStatus(id: string, status: string, trackingUrl?: string): Promise<boolean> {
+  try {
+    const updateData: any = { status };
+    if (trackingUrl !== undefined) {
+      updateData.tracking_url = trackingUrl || null;
+    }
+    
+    const { error } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to update order status:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception updating order status:', err);
     return false;
   }
 }

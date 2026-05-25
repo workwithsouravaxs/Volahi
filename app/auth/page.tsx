@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useVolahiStore } from '@/lib/store';
 import Navbar from '@/components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Heart, Phone } from 'lucide-react';
 import { saveLead } from '@/lib/supabase';
 
-export default function CustomerAuth() {
+function CustomerAuthContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { loginUser, currentUser } = useVolahiStore();
   
   const [activeTab, setActiveTab] = useState<'login' | 'signup' | 'reset'>('login');
@@ -21,12 +22,14 @@ export default function CustomerAuth() {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already logged in, redirect to profile
+  const redirectTarget = searchParams.get('redirect') || '/profile';
+
+  // If already logged in, redirect
   React.useEffect(() => {
     if (currentUser) {
-      router.push('/profile');
+      router.push(redirectTarget);
     }
-  }, [currentUser, router]);
+  }, [currentUser, router, redirectTarget]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +50,7 @@ export default function CustomerAuth() {
         wishlist: [],
       });
       setIsLoading(false);
-      router.push('/profile');
+      router.push(redirectTarget);
     }, 1000);
   };
 
@@ -76,7 +79,7 @@ export default function CustomerAuth() {
       wishlist: [],
     });
     setIsLoading(false);
-    router.push('/profile');
+    router.push(redirectTarget);
   };
 
   const handleReset = (e: React.FormEvent) => {
@@ -366,5 +369,19 @@ export default function CustomerAuth() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function CustomerAuth() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FFF9F7] flex items-center justify-center font-body text-primary">
+        <div className="text-center font-heading text-xl uppercase tracking-widest animate-pulse">
+          Loading Authorization...
+        </div>
+      </div>
+    }>
+      <CustomerAuthContent />
+    </Suspense>
   );
 }

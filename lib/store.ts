@@ -9,7 +9,10 @@ import {
   addDbBanner, 
   deleteDbBanner, 
   toggleDbBanner, 
-  setDbMiddleBanner 
+  setDbMiddleBanner,
+  fetchDbOrders,
+  addDbOrder,
+  updateDbOrderStatus
 } from './supabase';
 
 export interface Product {
@@ -84,7 +87,8 @@ export interface Order {
   tax: number;
   shipping: number;
   total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered';
+  status: 'Pending Approval' | 'Approved' | 'Rejected' | 'Processing' | 'Shipped' | 'Delivered';
+  trackingUrl?: string;
   date: string;
 }
 
@@ -124,8 +128,8 @@ interface VolahiStore {
   toggleWishlist: (productId: string) => void;
 
   // Order Actions
-  placeOrder: (order: Omit<Order, 'id' | 'status' | 'date'>) => string;
-  updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  placeOrder: (order: Omit<Order, 'id' | 'status' | 'date' | 'trackingUrl'>) => string;
+  updateOrderStatus: (orderId: string, status: Order['status'], trackingUrl?: string) => void;
 
   // Auth Actions
   loginUser: (user: User) => void;
@@ -152,11 +156,13 @@ export const useVolahiStore = create<VolahiStore>()(
         try {
           const dbProducts = await getDbProducts();
           const { banners: dbBanners, middleBanner: dbMiddleBanner } = await getDbBanners();
+          const dbOrders = await fetchDbOrders();
 
           set((state) => ({
             products: dbProducts.length > 0 ? dbProducts : state.products,
             banners: dbBanners.length > 0 ? dbBanners : state.banners,
             middleBanner: dbMiddleBanner || state.middleBanner,
+            orders: dbOrders.length > 0 ? dbOrders : state.orders,
           }));
         } catch (err) {
           console.warn('[Zustand Store] Failed to sync with Supabase global database:', err);
@@ -317,7 +323,7 @@ export const useVolahiStore = create<VolahiStore>()(
         const newOrder: Order = {
           ...orderData,
           id: orderId,
-          status: 'Processing',
+          status: 'Pending Approval',
           date: new Date().toLocaleDateString('en-IN', {
             year: 'numeric',
             month: 'long',
@@ -329,13 +335,26 @@ export const useVolahiStore = create<VolahiStore>()(
           orders: [newOrder, ...state.orders],
         }));
 
+        addDbOrder(newOrder).catch((err) => 
+          console.error('[Supabase DB Sync] addDbOrder failed:', err)
+        );
+
         return orderId;
       },
 
-      updateOrderStatus: (orderId, status) =>
+      updateOrderStatus: (orderId, status, trackingUrl) => {
         set((state) => ({
-          orders: state.orders.map((o) => (o.id === orderId ? { ...o, status } : o)),
-        })),
+          orders: state.orders.map((o) => 
+            o.id === orderId 
+              ? { ...o, status, trackingUrl: trackingUrl || o.trackingUrl } 
+              : o
+          ),
+        }));
+
+        updateDbOrderStatus(orderId, status, trackingUrl).catch((err) =>
+          console.error('[Supabase DB Sync] updateDbOrderStatus failed:', err)
+        );
+      },
 
       // Auth Reducers
       loginUser: (user) => set({ currentUser: user }),

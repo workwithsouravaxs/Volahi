@@ -849,6 +849,14 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4">
                           <p className="text-slate-800 font-bold uppercase tracking-wider">{o.customerName}</p>
                           <p className="text-[10px] text-neutral-400 font-medium tracking-normal mt-0.5">{o.customerEmail}</p>
+                          {o.shippingDetails?.phone && (
+                            <p className="text-[9px] text-slate-700 font-semibold tracking-wider uppercase mt-1">Phone: {o.shippingDetails.phone}</p>
+                          )}
+                          {o.shippingDetails?.address && (
+                            <p className="text-[8px] text-neutral-400 font-medium tracking-normal mt-0.5 truncate max-w-xs" title={`${o.shippingDetails.address}, ${o.shippingDetails.city} - ${o.shippingDetails.zipCode}`}>
+                              Dest: {o.shippingDetails.address}, {o.shippingDetails.city} - {o.shippingDetails.zipCode}
+                            </p>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-neutral-400 font-bold uppercase tracking-widest">{o.date}</td>
                         <td className="px-6 py-4 text-slate-800">
@@ -863,23 +871,76 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 text-slate-900 font-bold">₹{o.total.toLocaleString()}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-block px-2.5 py-1 rounded-sm text-[9px] uppercase tracking-widest font-bold ${
+                            o.status === 'Pending Approval' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
+                            o.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                            o.status === 'Rejected' ? 'bg-red-100 text-red-800' :
                             o.status === 'Processing' ? 'bg-amber-100 text-amber-800' :
                             o.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
                             'bg-green-100 text-green-800'
                           }`}>
                             {o.status}
                           </span>
+                          {o.trackingUrl && (
+                            <a 
+                              href={o.trackingUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="block text-[8px] text-cta hover:underline font-bold uppercase tracking-widest mt-1"
+                            >
+                              Track Order ↗
+                            </a>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <select 
-                            value={o.status}
-                            onChange={(e) => updateOrderStatus(o.id, e.target.value as any)}
-                            className="bg-transparent border border-slate-200 text-[10px] uppercase font-bold tracking-wider rounded p-1.5 focus:outline-none"
-                          >
-                            <option value="Processing">Processing</option>
-                            <option value="Shipped">Shipped</option>
-                            <option value="Delivered">Delivered</option>
-                          </select>
+                          {o.status === 'Pending Approval' ? (
+                            <div className="flex gap-2 justify-end">
+                              <button 
+                                onClick={() => updateOrderStatus(o.id, 'Processing')}
+                                className="px-2.5 py-1.5 bg-emerald-600 text-white rounded text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95"
+                              >
+                                Approve
+                              </button>
+                              <button 
+                                onClick={() => updateOrderStatus(o.id, 'Rejected')}
+                                className="px-2.5 py-1.5 bg-red-600 text-white rounded text-[9px] font-bold uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2 items-end">
+                              <select 
+                                value={o.status}
+                                onChange={(e) => {
+                                  const nextStatus = e.target.value as any;
+                                  if (nextStatus === 'Shipped') {
+                                    const url = prompt("Enter the Dispatch Tracking URL Link for this order:", o.trackingUrl || "");
+                                    updateOrderStatus(o.id, nextStatus, url || undefined);
+                                  } else {
+                                    updateOrderStatus(o.id, nextStatus);
+                                  }
+                                }}
+                                className="bg-transparent border border-slate-200 text-[10px] uppercase font-bold tracking-wider rounded p-1.5 focus:outline-none"
+                              >
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Processing">Processing</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Delivered">Delivered</option>
+                              </select>
+                              {o.status === 'Shipped' && (
+                                <button 
+                                  onClick={() => {
+                                    const url = prompt("Update the Tracking URL Link for this order:", o.trackingUrl || "");
+                                    updateOrderStatus(o.id, o.status, url || undefined);
+                                  }}
+                                  className="text-[8px] font-bold text-primary hover:underline border border-slate-200 rounded px-1.5 py-0.5 bg-white uppercase tracking-wider"
+                                >
+                                  Edit Tracking URL
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
