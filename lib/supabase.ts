@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ukjbaufeubjmzycpdtde.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVramJhdWZldWJqbXp5Y3BkdGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2OTQ3NTgsImV4cCI6MjA5NTI3MDc1OH0.QD_t9RXpnTIAd-hL18HwdLujh1vr4CWSDTwqLKLEW8U';
@@ -494,3 +495,209 @@ export async function deleteDbOrder(id: string): Promise<boolean> {
   }
 }
 
+// ==================== USER AUTHENTICATION & SESSION SYNC OPERATIONS ====================
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  wishlist: string[];
+  cart: import('./store').CartItem[];
+  createdAt: string;
+  lastLogin: string | null;
+}
+
+/**
+ * Registers a new user account in the Supabase users table.
+ * Password is hashed with bcrypt (cost factor 10) before storage.
+ * Returns the new UserProfile on success, or a string error code on failure.
+ */
+export async function signupUser(
+  email: string,
+  password: string,
+  fullName: string,
+  phone?: string
+): Promise<UserProfile | 'already_exists' | 'error'> {
+  try {
+    // Check if email is already registered
+    const { data: existing, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('[Auth] Error checking existing user:', checkError.message);
+      return 'error';
+    }
+
+    if (existing) {
+      return 'already_exists';
+    }
+
+    // Hash the password with bcrypt (cost factor 10)
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('users')
+      .insert([{
+        email: email.toLowerCase().trim(),
+        password_hash: passwordHash,
+        full_name: fullName,
+        phone_number: phone || null,
+        wishlist: [],
+        cart: [],
+        created_at: now,
+        updated_at: now,
+        last_login: now,
+      }])
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error('[Auth] Failed to insert user:', error?.message);
+      return 'error';
+    }
+
+    return {
+      id: data.id,
+      email: data.email,
+      fullName: data.full_name,
+      phone: data.phone_number || '',
+      wishlist: Array.isArray(data.wishlist) ? data.wishlist : [],
+      cart: Array.isArray(data.cart) ? data.cart : [],
+      createdAt: data.created_at,
+      lastLogin: data.last_login,
+    };
+  } catch (err) {
+    console.error('[Auth] Exception during signup:', err);
+    return 'error';
+  }
+}
+
+/**
+ * Authenticates a user by validating their email and bcrypt-hashed password.
+ * Updates last_login on success.
+ * Returns the full UserProfile on success, or a string error code on failure.
+ */
+export async function loginUserWithCredentials(
+  email: string,
+  password: string
+): Promise<UserProfile | 'not_found' | 'wrong_password' | 'error'> {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (error) {
+      console.error('[Auth] Error fetching user for login:', error.message);
+      return 'error';
+    }
+
+    if (!data) {
+      return 'not_found';
+    }
+
+    // Verify password against stored hash
+    const isValid = await bcrypt.compare(password, data.password_hash);
+    if (!isValid) {
+      return 'wrong_password';
+    }
+
+    // Update last_login timestamp
+    const now = new Date().toISOString();
+    await supabase
+      .from('users')
+      .update({ last_login: now, updated_at: now })
+      .eq('id', data.id);
+
+    return {
+      id: data.id,
+      email: data.email,
+      fullName: data.full_name,
+      phone: data.phone_number || '',
+      wishlist: Array.isArray(data.wishlist) ? data.wishlist : [],
+      cart: Array.isArray(data.cart) ? data.cart : [],
+      createdAt: data.created_at,
+      lastLogin: now,
+    };
+  } catch (err) {
+    console.error('[Auth] Exception during login:', err);
+    return 'error';
+  }
+}
+
+/**
+ * Fetches the full user profile from the database by email.
+ * Used to restore session data (cart, wishlist) on login.
+ */
+export async function fetchUserProfile(email: string): Promise<UserProfile | null> {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (error || !data) {
+      console.warn('[Auth] Could not fetch user profile:', error?.message);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      email: data.email,
+      fullName: data.full_name,
+      phone: data.phone_number || '',
+      wishlist: Array.isArray(data.wishlist) ? data.wishlist : [],
+      cart: Array.isArray(data.cart) ? data.cart : [],
+      createdAt: data.created_at,
+      lastLogin: data.last_login,
+    };
+  } catch (err) {
+    console.warn('[Auth] Exception fetching user profile:', err);
+    return null;
+  }
+}
+
+/**
+ * Persists the user's current cart state to their database row.
+ * Called on every cart mutation when a user is logged in.
+ */
+export async function updateUserCartInDb(email: string, cart: import('./store').CartItem[]): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ cart, updated_at: new Date().toISOString() })
+      .eq('email', email.toLowerCase().trim());
+
+    if (error) {
+      console.warn('[Auth] Failed to sync cart to DB:', error.message);
+    }
+  } catch (err) {
+    console.warn('[Auth] Exception syncing cart to DB:', err);
+  }
+}
+
+/**
+ * Persists the user's current wishlist state to their database row.
+ * Called on every wishlist toggle when a user is logged in.
+ */
+export async function updateUserWishlistInDb(email: string, wishlist: string[]): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ wishlist, updated_at: new Date().toISOString() })
+      .eq('email', email.toLowerCase().trim());
+
+    if (error) {
+      console.warn('[Auth] Failed to sync wishlist to DB:', error.message);
+    }
+  } catch (err) {
+    console.warn('[Auth] Exception syncing wishlist to DB:', err);
+  }
+}

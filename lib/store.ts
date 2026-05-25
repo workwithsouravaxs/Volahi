@@ -13,7 +13,11 @@ import {
   fetchDbOrders,
   addDbOrder,
   updateDbOrderStatus,
-  deleteDbOrder
+  deleteDbOrder,
+  signupUser,
+  loginUserWithCredentials,
+  updateUserCartInDb,
+  updateUserWishlistInDb,
 } from './supabase';
 
 export interface Product {
@@ -70,6 +74,7 @@ export interface CartItem {
 export interface User {
   email: string;
   name: string;
+  phone?: string;
   wishlist: string[]; // product IDs
 }
 
@@ -138,6 +143,10 @@ interface VolahiStore {
   logoutUser: () => void;
   loginAdmin: () => boolean;
   logoutAdmin: () => void;
+
+  // Database-Backed Auth Actions
+  loginWithDb: (email: string, password: string) => Promise<'success' | 'not_found' | 'wrong_password' | 'error'>;
+  signupWithDb: (email: string, password: string, name: string, phone?: string) => Promise<'success' | 'already_exists' | 'error'>;
 }
 
 export const useVolahiStore = create<VolahiStore>()(
@@ -264,8 +273,11 @@ export const useVolahiStore = create<VolahiStore>()(
         );
       },
 
-      // Cart Reducers
-      addToCart: (newItem) =>
+      // Cart Reducers — auto-sync to DB when user is logged in
+      addToCart: (newItem) => {
+        const { currentUser } = get();
+        let updatedCart: CartItem[] = [];
+
         set((state) => {
           const existingItemIndex = state.cart.findIndex(
             (item) =>
@@ -275,49 +287,101 @@ export const useVolahiStore = create<VolahiStore>()(
           );
 
           if (existingItemIndex > -1) {
-            const updatedCart = [...state.cart];
-            updatedCart[existingItemIndex].quantity += newItem.quantity;
-            return { cart: updatedCart };
+            const newCart = [...state.cart];
+            newCart[existingItemIndex] = {
+              ...newCart[existingItemIndex],
+              quantity: newCart[existingItemIndex].quantity + newItem.quantity,
+            };
+            updatedCart = newCart;
+            return { cart: newCart };
           }
 
-          return { cart: [...state.cart, newItem] };
-        }),
+          updatedCart = [...state.cart, newItem];
+          return { cart: updatedCart };
+        });
 
-      removeFromCart: (productId, size, color) =>
-        set((state) => ({
-          cart: state.cart.filter(
+        if (currentUser?.email) {
+          updateUserCartInDb(currentUser.email, updatedCart).catch((err) =>
+            console.error('[Auth Sync] addToCart DB sync failed:', err)
+          );
+        }
+      },
+
+      removeFromCart: (productId, size, color) => {
+        const { currentUser } = get();
+        let updatedCart: CartItem[] = [];
+
+        set((state) => {
+          updatedCart = state.cart.filter(
             (item) =>
               !(
                 item.product.id === productId &&
                 item.selectedSize === size &&
                 item.selectedColor === color
               )
-          ),
-        })),
+          );
+          return { cart: updatedCart };
+        });
 
-      updateCartQuantity: (productId, size, color, quantity) =>
-        set((state) => ({
-          cart: state.cart
-            .map((item) =>
-              item.product.id === productId &&
-              item.selectedSize === size &&
-              item.selectedColor === color
-                ? { ...item, quantity: Math.max(1, quantity) }
-                : item
-            ),
-        })),
+        if (currentUser?.email) {
+          updateUserCartInDb(currentUser.email, updatedCart).catch((err) =>
+            console.error('[Auth Sync] removeFromCart DB sync failed:', err)
+          );
+        }
+      },
 
-      clearCart: () => set({ cart: [] }),
+      updateCartQuantity: (productId, size, color, quantity) => {
+        const { currentUser } = get();
+        let updatedCart: CartItem[] = [];
 
-      // Wishlist Reducers
-      toggleWishlist: (productId) =>
+        set((state) => {
+          updatedCart = state.cart.map((item) =>
+            item.product.id === productId &&
+            item.selectedSize === size &&
+            item.selectedColor === color
+              ? { ...item, quantity: Math.max(1, quantity) }
+              : item
+          );
+          return { cart: updatedCart };
+        });
+
+        if (currentUser?.email) {
+          updateUserCartInDb(currentUser.email, updatedCart).catch((err) =>
+            console.error('[Auth Sync] updateCartQuantity DB sync failed:', err)
+          );
+        }
+      },
+
+      clearCart: () => {
+        const { currentUser } = get();
+        set({ cart: [] });
+
+        if (currentUser?.email) {
+          updateUserCartInDb(currentUser.email, []).catch((err) =>
+            console.error('[Auth Sync] clearCart DB sync failed:', err)
+          );
+        }
+      },
+
+      // Wishlist Reducers — auto-sync to DB when user is logged in
+      toggleWishlist: (productId) => {
+        const { currentUser } = get();
+        let updatedWishlist: string[] = [];
+
         set((state) => {
           const isWishlisted = state.wishlist.includes(productId);
-          const updatedWishlist = isWishlisted
+          updatedWishlist = isWishlisted
             ? state.wishlist.filter((id) => id !== productId)
             : [...state.wishlist, productId];
           return { wishlist: updatedWishlist };
-        }),
+        });
+
+        if (currentUser?.email) {
+          updateUserWishlistInDb(currentUser.email, updatedWishlist).catch((err) =>
+            console.error('[Auth Sync] toggleWishlist DB sync failed:', err)
+          );
+        }
+      },
 
       // Order Reducers
       placeOrder: (orderData) => {
@@ -370,12 +434,98 @@ export const useVolahiStore = create<VolahiStore>()(
 
       // Auth Reducers
       loginUser: (user) => set({ currentUser: user }),
-      logoutUser: () => set({ currentUser: null }),
+      
+      logoutUser: () => set({ 
+        currentUser: null,
+        cart: [],       // Clear cart on logout — will be restored from DB on next login
+        wishlist: [],   // Clear wishlist on logout — will be restored from DB on next login
+      }),
+
       loginAdmin: () => {
         set({ isAdminAuthenticated: true });
         return true;
       },
       logoutAdmin: () => set({ isAdminAuthenticated: false }),
+
+      // ===== DATABASE-BACKED AUTH ACTIONS =====
+
+      loginWithDb: async (email, password) => {
+        const result = await loginUserWithCredentials(email, password);
+
+        if (result === 'not_found' || result === 'wrong_password' || result === 'error') {
+          return result;
+        }
+
+        // result is UserProfile — restore full session state
+        const dbProfile = result;
+        const { cart: localCart, wishlist: localWishlist } = get();
+
+        // Union-merge: combine DB data with any local guest items, no duplicates
+        const mergedWishlist = Array.from(new Set([...dbProfile.wishlist, ...localWishlist]));
+
+        // Merge carts: combine DB cart with local cart, aggregating quantities for same items
+        const mergedCart: CartItem[] = [...dbProfile.cart];
+        for (const localItem of localCart) {
+          const existingIdx = mergedCart.findIndex(
+            (item) =>
+              item.product.id === localItem.product.id &&
+              item.selectedSize === localItem.selectedSize &&
+              item.selectedColor === localItem.selectedColor
+          );
+          if (existingIdx > -1) {
+            mergedCart[existingIdx] = {
+              ...mergedCart[existingIdx],
+              quantity: mergedCart[existingIdx].quantity + localItem.quantity,
+            };
+          } else {
+            mergedCart.push(localItem);
+          }
+        }
+
+        // Set user state and restore merged data
+        set({
+          currentUser: {
+            email: dbProfile.email,
+            name: dbProfile.fullName,
+            phone: dbProfile.phone,
+            wishlist: mergedWishlist,
+          },
+          cart: mergedCart,
+          wishlist: mergedWishlist,
+        });
+
+        // Persist merged data back to DB if there were local guest items
+        if (localCart.length > 0 || localWishlist.length > 0) {
+          updateUserCartInDb(dbProfile.email, mergedCart).catch(() => null);
+          updateUserWishlistInDb(dbProfile.email, mergedWishlist).catch(() => null);
+        }
+
+        return 'success';
+      },
+
+      signupWithDb: async (email, password, name, phone) => {
+        const result = await signupUser(email, password, name, phone);
+
+        if (result === 'already_exists' || result === 'error') {
+          return result;
+        }
+
+        // result is UserProfile — log the user in immediately
+        const dbProfile = result;
+
+        set({
+          currentUser: {
+            email: dbProfile.email,
+            name: dbProfile.fullName,
+            phone: dbProfile.phone,
+            wishlist: [],
+          },
+          cart: [],
+          wishlist: [],
+        });
+
+        return 'success';
+      },
     }),
     {
       name: 'volahi-couture-storage', // key in localStorage

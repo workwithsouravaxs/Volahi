@@ -6,12 +6,11 @@ import { useVolahiStore } from '@/lib/store';
 import Navbar from '@/components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Heart, Phone } from 'lucide-react';
-import { saveLead } from '@/lib/supabase';
 
 function CustomerAuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { loginUser, currentUser } = useVolahiStore();
+  const { loginWithDb, signupWithDb, currentUser } = useVolahiStore();
   
   const [activeTab, setActiveTab] = useState<'login' | 'signup' | 'reset'>('login');
   const [name, setName] = useState('');
@@ -31,7 +30,7 @@ function CustomerAuthContent() {
     }
   }, [currentUser, router, redirectTarget]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -42,16 +41,25 @@ function CustomerAuthContent() {
       return;
     }
 
-    // Mock verification
-    setTimeout(() => {
-      loginUser({
-        email,
-        name: email.split('@')[0].toUpperCase(),
-        wishlist: [],
-      });
-      setIsLoading(false);
-      router.push(redirectTarget);
-    }, 1000);
+    const result = await loginWithDb(email.trim(), password);
+
+    switch (result) {
+      case 'success':
+        // currentUser will be set by the store action, useEffect above will redirect
+        break;
+      case 'not_found':
+        setError('No account found with this email address. Please create a new account.');
+        break;
+      case 'wrong_password':
+        setError('Incorrect password. Please check your credentials and try again.');
+        break;
+      case 'error':
+      default:
+        setError('Authentication service is temporarily unavailable. Please try again.');
+        break;
+    }
+
+    setIsLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -60,26 +68,33 @@ function CustomerAuthContent() {
     setIsLoading(true);
 
     if (!name || !email || !password || !phone) {
-      setError('Please fill in all requested attributes.');
+      setError('Please fill in all required fields.');
       setIsLoading(false);
       return;
     }
 
-    try {
-      // Sync customer signup directly to the Supabase database leads table
-      await saveLead(name, phone, email);
-    } catch (err) {
-      console.warn('Supabase DB leads insertion error, falling back locally:', err);
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      setIsLoading(false);
+      return;
     }
 
-    // Log the user in locally
-    loginUser({
-      email,
-      name: name.toUpperCase(),
-      wishlist: [],
-    });
+    const result = await signupWithDb(email.trim(), password, name.trim(), phone.trim());
+
+    switch (result) {
+      case 'success':
+        // currentUser will be set by the store action, useEffect above will redirect
+        break;
+      case 'already_exists':
+        setError('An account with this email address already exists. Please sign in instead.');
+        break;
+      case 'error':
+      default:
+        setError('Unable to create your account. Please try again or contact support.');
+        break;
+    }
+
     setIsLoading(false);
-    router.push(redirectTarget);
   };
 
   const handleReset = (e: React.FormEvent) => {
@@ -222,8 +237,19 @@ function CustomerAuthContent() {
                     disabled={isLoading}
                     className="w-full bg-primary text-white py-4 font-bold text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all active:scale-[0.98] disabled:bg-neutral-300"
                   >
-                    {isLoading ? 'SIGNING IN...' : 'SIGN IN'} <ArrowRight className="w-4 h-4" />
+                    {isLoading ? 'VERIFYING CREDENTIALS...' : 'SIGN IN'} <ArrowRight className="w-4 h-4" />
                   </button>
+
+                  <p className="text-center text-[9px] text-neutral-400 font-bold uppercase tracking-widest">
+                    New to Volahi?{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('signup'); setError(''); }}
+                      className="text-cta hover:underline"
+                    >
+                      Create an Account
+                    </button>
+                  </p>
                 </motion.form>
               )}
 
@@ -296,8 +322,9 @@ function CustomerAuthContent() {
                       <input 
                         type="password" 
                         required
+                        minLength={6}
                         className="w-full pl-8 bg-transparent border-none focus:outline-none text-xs font-bold tracking-widest placeholder:text-neutral-300"
-                        placeholder="••••••••"
+                        placeholder="•••••••• (min. 6 characters)"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
@@ -311,6 +338,17 @@ function CustomerAuthContent() {
                   >
                     {isLoading ? 'CREATING ATELIER ACCOUNT...' : 'REGISTER ACCOUNT'} <ArrowRight className="w-4 h-4" />
                   </button>
+
+                  <p className="text-center text-[9px] text-neutral-400 font-bold uppercase tracking-widest">
+                    Already a patron?{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('login'); setError(''); }}
+                      className="text-cta hover:underline"
+                    >
+                      Sign In
+                    </button>
+                  </p>
                 </motion.form>
               )}
 

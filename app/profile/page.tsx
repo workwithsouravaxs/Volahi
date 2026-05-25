@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useVolahiStore } from '@/lib/store';
 import Navbar from '@/components/Navbar';
-import { ShoppingBag, User, LogOut, CheckCircle, Package, Truck, Compass, Sparkles } from 'lucide-react';
+import { ShoppingBag, User, LogOut, CheckCircle, Package, Truck, Compass, Sparkles, Phone } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CustomerProfile() {
@@ -44,6 +44,11 @@ export default function CustomerProfile() {
               <span className="text-[10px] text-cta font-bold uppercase tracking-[0.3em] block">Volahi Atelier Patron</span>
               <h1 className="text-4xl font-heading uppercase tracking-tighter mt-1">{currentUser.name}</h1>
               <span className="text-xs text-neutral-400 font-bold tracking-wider uppercase mt-1 block">{currentUser.email}</span>
+              {currentUser.phone && (
+                <span className="text-xs text-neutral-400 font-bold tracking-wider mt-0.5 flex items-center gap-1.5">
+                  <Phone className="w-3 h-3" /> {currentUser.phone}
+                </span>
+              )}
             </div>
           </div>
 
