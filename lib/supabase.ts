@@ -107,3 +107,270 @@ export async function verifyAdmin(email: string, pass: string): Promise<boolean>
     throw err; // Trigger local fallback in admin login
   }
 }
+
+// ==================== DB SYNC OPERATIONS & MODEL MAPPINGS ====================
+
+import { Product, Banner } from './store';
+
+// Product Serialization Helpers
+const mapToProduct = (dbRow: any): Product => ({
+  id: dbRow.id,
+  name: dbRow.name,
+  description: dbRow.description,
+  category: dbRow.category,
+  subcategory: dbRow.subcategory || '',
+  price: Number(dbRow.price),
+  discountPrice: dbRow.discount_price ? Number(dbRow.discount_price) : undefined,
+  images: Array.isArray(dbRow.images) ? dbRow.images : JSON.parse(dbRow.images || '[]'),
+  image: dbRow.image,
+  stock: Number(dbRow.stock),
+  sku: dbRow.sku || '',
+  brand: dbRow.brand,
+  material: dbRow.material,
+  colors: Array.isArray(dbRow.colors) ? dbRow.colors : JSON.parse(dbRow.colors || '[]'),
+  sizes: Array.isArray(dbRow.sizes) ? dbRow.sizes : JSON.parse(dbRow.sizes || '[]'),
+  allSizesAvailable: !!dbRow.all_sizes_available,
+  tags: Array.isArray(dbRow.tags) ? dbRow.tags : JSON.parse(dbRow.tags || '[]'),
+  features: Array.isArray(dbRow.features) ? dbRow.features : JSON.parse(dbRow.features || '[]'),
+  careInstructions: dbRow.care_instructions,
+  shippingInfo: dbRow.shipping_info,
+  returnPolicy: dbRow.return_policy,
+  status: dbRow.status,
+  featured: !!dbRow.featured,
+  bestSeller: !!dbRow.best_seller,
+  newArrival: !!dbRow.new_arrival,
+});
+
+const mapToDbProduct = (p: Omit<Product, 'reviews'>) => ({
+  id: p.id,
+  name: p.name,
+  description: p.description,
+  category: p.category,
+  subcategory: p.subcategory || null,
+  price: p.price,
+  discount_price: p.discountPrice || null,
+  images: Array.isArray(p.images) ? p.images : [],
+  image: p.image,
+  stock: p.stock,
+  sku: p.sku || null,
+  brand: p.brand || 'Volahi',
+  material: p.material,
+  colors: Array.isArray(p.colors) ? p.colors : [],
+  sizes: Array.isArray(p.sizes) ? p.sizes : [],
+  all_sizes_available: !!p.allSizesAvailable,
+  tags: Array.isArray(p.tags) ? p.tags : [],
+  features: Array.isArray(p.features) ? p.features : [],
+  care_instructions: p.careInstructions,
+  shipping_info: p.shippingInfo,
+  return_policy: p.returnPolicy,
+  status: p.status,
+  featured: !!p.featured,
+  best_seller: !!p.bestSeller,
+  new_arrival: !!p.newArrival,
+});
+
+// Banner Serialization Helpers
+const mapToBanner = (dbRow: any): Banner => ({
+  id: dbRow.id,
+  image: dbRow.image,
+  title: dbRow.title || '',
+  subtitle: dbRow.subtitle || '',
+  ctaText: dbRow.cta_text || '',
+  ctaLink: dbRow.cta_link || '',
+  active: !!dbRow.active,
+});
+
+const mapToDbBanner = (b: Banner, isMiddle = false) => ({
+  id: b.id,
+  image: b.image,
+  title: b.title || '',
+  subtitle: b.subtitle || '',
+  cta_text: b.ctaText || '',
+  cta_link: b.ctaLink || '',
+  active: !!b.active,
+  is_middle: isMiddle,
+});
+
+// Products DB Operations
+export async function getDbProducts(): Promise<Product[]> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('[Supabase DB] Error fetching products, fallback active:', error.message);
+      return [];
+    }
+
+    return (data || []).map(mapToProduct);
+  } catch (err) {
+    console.warn('[Supabase DB] Exception fetching products, fallback active:', err);
+    return [];
+  }
+}
+
+export async function addDbProduct(p: Omit<Product, 'reviews'>): Promise<boolean> {
+  try {
+    const dbRow = mapToDbProduct(p);
+    const { error } = await supabase
+      .from('products')
+      .insert([dbRow]);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to insert product:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception inserting product:', err);
+    return false;
+  }
+}
+
+export async function editDbProduct(p: Product): Promise<boolean> {
+  try {
+    const dbRow = mapToDbProduct(p);
+    const { error } = await supabase
+      .from('products')
+      .update(dbRow)
+      .eq('id', p.id);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to update product:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception updating product:', err);
+    return false;
+  }
+}
+
+export async function deleteDbProduct(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to delete product:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception deleting product:', err);
+    return false;
+  }
+}
+
+// Banners DB Operations
+export async function getDbBanners(): Promise<{ banners: Banner[]; middleBanner: Banner | null }> {
+  try {
+    const { data, error } = await supabase
+      .from('banners')
+      .select('*');
+
+    if (error) {
+      console.warn('[Supabase DB] Error fetching banners, fallback active:', error.message);
+      return { banners: [], middleBanner: null };
+    }
+
+    const rows = data || [];
+    const banners = rows.filter((r: any) => !r.is_middle).map(mapToBanner);
+    const middleRow = rows.find((r: any) => r.is_middle);
+    const middleBanner = middleRow ? mapToBanner(middleRow) : null;
+
+    return { banners, middleBanner };
+  } catch (err) {
+    console.warn('[Supabase DB] Exception fetching banners, fallback active:', err);
+    return { banners: [], middleBanner: null };
+  }
+}
+
+export async function addDbBanner(b: Banner): Promise<boolean> {
+  try {
+    const dbRow = mapToDbBanner(b, false);
+    const { error } = await supabase
+      .from('banners')
+      .insert([dbRow]);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to insert banner:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception inserting banner:', err);
+    return false;
+  }
+}
+
+export async function deleteDbBanner(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('banners')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to delete banner:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception deleting banner:', err);
+    return false;
+  }
+}
+
+export async function toggleDbBanner(id: string, active: boolean): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('banners')
+      .update({ active })
+      .eq('id', id);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to toggle banner status:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception toggling banner status:', err);
+    return false;
+  }
+}
+
+export async function setDbMiddleBanner(b: Banner | null): Promise<boolean> {
+  try {
+    // Delete existing middle banner first
+    const { error: delError } = await supabase
+      .from('banners')
+      .delete()
+      .eq('is_middle', true);
+
+    if (delError) {
+      console.error('[Supabase DB] Failed to delete old middle banner:', delError.message);
+    }
+
+    if (!b) return true; // clean deletion complete
+
+    const dbRow = mapToDbBanner(b, true);
+    const { error } = await supabase
+      .from('banners')
+      .insert([dbRow]);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to insert middle banner:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception setting middle banner:', err);
+    return false;
+  }
+}
+

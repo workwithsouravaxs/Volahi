@@ -1,5 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { 
+  getDbProducts, 
+  addDbProduct, 
+  editDbProduct, 
+  deleteDbProduct, 
+  getDbBanners, 
+  addDbBanner, 
+  deleteDbBanner, 
+  toggleDbBanner, 
+  setDbMiddleBanner 
+} from './supabase';
 
 export interface Product {
   id: string;
@@ -100,6 +111,9 @@ interface VolahiStore {
   toggleBannerStatus: (id: string) => void;
   setMiddleBanner: (banner: Banner | null) => void;
 
+  // Asynchronous Global DB Sync Action
+  fetchStoreData: () => Promise<void>;
+
   // Cart Actions
   addToCart: (item: CartItem) => void;
   removeFromCart: (productId: string, size: string, color: string) => void;
@@ -133,21 +147,50 @@ export const useVolahiStore = create<VolahiStore>()(
       currentUser: null,
       isAdminAuthenticated: false,
 
-      // Product Reducers
-      addProduct: (newProduct) =>
-        set((state) => ({
-          products: [...state.products, { ...newProduct, reviews: [] }],
-        })),
+      // Asynchronous Global DB Synchronization
+      fetchStoreData: async () => {
+        try {
+          const dbProducts = await getDbProducts();
+          const { banners: dbBanners, middleBanner: dbMiddleBanner } = await getDbBanners();
 
-      editProduct: (updatedProduct) =>
+          set((state) => ({
+            products: dbProducts.length > 0 ? dbProducts : state.products,
+            banners: dbBanners.length > 0 ? dbBanners : state.banners,
+            middleBanner: dbMiddleBanner || state.middleBanner,
+          }));
+        } catch (err) {
+          console.warn('[Zustand Store] Failed to sync with Supabase global database:', err);
+        }
+      },
+
+      // Product Reducers
+      addProduct: (newProduct) => {
+        const item = { ...newProduct, reviews: [] };
+        set((state) => ({
+          products: [...state.products, item],
+        }));
+        addDbProduct(newProduct).catch((err) => 
+          console.error('[Supabase DB Sync] addProduct failed:', err)
+        );
+      },
+
+      editProduct: (updatedProduct) => {
         set((state) => ({
           products: state.products.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)),
-        })),
+        }));
+        editDbProduct(updatedProduct).catch((err) => 
+          console.error('[Supabase DB Sync] editProduct failed:', err)
+        );
+      },
 
-      deleteProduct: (id) =>
+      deleteProduct: (id) => {
         set((state) => ({
           products: state.products.filter((p) => p.id !== id),
-        })),
+        }));
+        deleteDbProduct(id).catch((err) => 
+          console.error('[Supabase DB Sync] deleteProduct failed:', err)
+        );
+      },
 
       addReview: (productId, review) =>
         set((state) => ({
@@ -169,25 +212,49 @@ export const useVolahiStore = create<VolahiStore>()(
         })),
 
       // Banner Reducers
-      addBanner: (banner) =>
+      addBanner: (banner) => {
         set((state) => ({
           banners: [...state.banners, banner],
-        })),
+        }));
+        addDbBanner(banner).catch((err) => 
+          console.error('[Supabase DB Sync] addBanner failed:', err)
+        );
+      },
 
-      deleteBanner: (id) =>
+      deleteBanner: (id) => {
         set((state) => ({
           banners: state.banners.filter((b) => b.id !== id),
-        })),
+        }));
+        deleteDbBanner(id).catch((err) => 
+          console.error('[Supabase DB Sync] deleteBanner failed:', err)
+        );
+      },
 
-      toggleBannerStatus: (id) =>
-        set((state) => ({
-          banners: state.banners.map((b) => (b.id === id ? { ...b, active: !b.active } : b)),
-        })),
+      toggleBannerStatus: (id) => {
+        let nextActive = false;
+        set((state) => {
+          const nextBanners = state.banners.map((b) => {
+            if (b.id === id) {
+              nextActive = !b.active;
+              return { ...b, active: nextActive };
+            }
+            return b;
+          });
+          return { banners: nextBanners };
+        });
+        toggleDbBanner(id, nextActive).catch((err) => 
+          console.error('[Supabase DB Sync] toggleBannerStatus failed:', err)
+        );
+      },
 
-      setMiddleBanner: (banner) =>
+      setMiddleBanner: (banner) => {
         set({
           middleBanner: banner,
-        }),
+        });
+        setDbMiddleBanner(banner).catch((err) => 
+          console.error('[Supabase DB Sync] setMiddleBanner failed:', err)
+        );
+      },
 
       // Cart Reducers
       addToCart: (newItem) =>
