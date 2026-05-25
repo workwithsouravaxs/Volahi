@@ -12,7 +12,8 @@ import {
   setDbMiddleBanner,
   fetchDbOrders,
   addDbOrder,
-  updateDbOrderStatus
+  updateDbOrderStatus,
+  deleteDbOrder
 } from './supabase';
 
 export interface Product {
@@ -130,6 +131,7 @@ interface VolahiStore {
   // Order Actions
   placeOrder: (order: Omit<Order, 'id' | 'status' | 'date' | 'trackingUrl'>) => string;
   updateOrderStatus: (orderId: string, status: Order['status'], trackingUrl?: string) => void;
+  deleteOrder: (id: string) => void;
 
   // Auth Actions
   loginUser: (user: User) => void;
@@ -353,6 +355,16 @@ export const useVolahiStore = create<VolahiStore>()(
 
         updateDbOrderStatus(orderId, status, trackingUrl).catch((err) =>
           console.error('[Supabase DB Sync] updateDbOrderStatus failed:', err)
+        );
+      },
+
+      deleteOrder: (id) => {
+        set((state) => ({
+          orders: state.orders.filter((o) => o.id !== id),
+        }));
+
+        deleteDbOrder(id).catch((err) =>
+          console.error('[Supabase DB Sync] deleteOrder failed:', err)
         );
       },
 

@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function CustomerProfile() {
   const router = useRouter();
-  const { currentUser, logoutUser, orders } = useVolahiStore();
+  const { currentUser, logoutUser, orders, deleteOrder } = useVolahiStore();
 
   React.useEffect(() => {
     if (!currentUser) {
@@ -85,6 +85,20 @@ export default function CustomerProfile() {
                         <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider block">Total Spent</span>
                         <span className="text-sm font-bold text-slate-900 block">₹{order.total.toLocaleString()}</span>
                       </div>
+                      {(order.status === 'Pending Approval' || order.status === 'Approved' || order.status === 'Processing') && (
+                        <div>
+                          <button
+                            onClick={() => {
+                              if (confirm("Are you sure you want to cancel this couture order? This will permanently delete your order records.")) {
+                                deleteOrder(order.id);
+                              }
+                            }}
+                            className="px-3 py-1.5 border border-red-200 hover:bg-red-50 text-red-600 rounded text-[9px] font-bold uppercase tracking-widest transition-colors hover:border-red-300 active:scale-95"
+                          >
+                            Cancel Order
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Status Tracking Notifications or Progress Steps */}

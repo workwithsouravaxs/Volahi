@@ -44,7 +44,8 @@ export default function AdminDashboard() {
     deleteBanner,
     toggleBannerStatus,
     setMiddleBanner,
-    updateOrderStatus
+    updateOrderStatus,
+    deleteOrder
   } = useVolahiStore();
 
   // Route security gate: authorized only
@@ -901,7 +902,11 @@ export default function AdminDashboard() {
                                 Approve
                               </button>
                               <button 
-                                onClick={() => updateOrderStatus(o.id, 'Rejected')}
+                                onClick={() => {
+                                  if (confirm("Are you sure you want to reject this order? Rejecting it will permanently delete the order from both user and admin panels.")) {
+                                    deleteOrder(o.id);
+                                  }
+                                }}
                                 className="px-2.5 py-1.5 bg-red-600 text-white rounded text-[9px] font-bold uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95"
                               >
                                 Reject
@@ -913,7 +918,11 @@ export default function AdminDashboard() {
                                 value={o.status}
                                 onChange={(e) => {
                                   const nextStatus = e.target.value as any;
-                                  if (nextStatus === 'Shipped') {
+                                  if (nextStatus === 'Rejected') {
+                                    if (confirm("Are you sure you want to reject this order? Rejecting it will permanently delete the order from both user and admin panels.")) {
+                                      deleteOrder(o.id);
+                                    }
+                                  } else if (nextStatus === 'Shipped') {
                                     const url = prompt("Enter the Dispatch Tracking URL Link for this order:", o.trackingUrl || "");
                                     updateOrderStatus(o.id, nextStatus, url || undefined);
                                   } else {

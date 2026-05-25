@@ -476,3 +476,21 @@ export async function updateDbOrderStatus(id: string, status: string, trackingUr
   }
 }
 
+export async function deleteDbOrder(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('[Supabase DB] Failed to delete order:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Supabase DB] Exception deleting order:', err);
+    return false;
+  }
+}
+
