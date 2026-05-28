@@ -26,10 +26,6 @@ import {
   Star,
   Activity,
   Link2,
-  Instagram,
-  Facebook,
-  Twitter,
-  Youtube,
   X as XIcon,
 } from 'lucide-react';
 import Link from 'next/link';
