@@ -108,12 +108,17 @@ interface VolahiStore {
   orders: Order[];
   currentUser: User | null;
   isAdminAuthenticated: boolean;
+  categories: string[];
 
   // Product Actions
   addProduct: (product: Omit<Product, 'reviews'>) => void;
   editProduct: (product: Product) => void;
   deleteProduct: (id: string) => void;
   addReview: (productId: string, review: { reviewerName: string; rating: number; comment: string }) => void;
+
+  // Category Actions
+  addCategory: (category: string) => void;
+  deleteCategory: (category: string) => void;
 
   // Banner Actions
   addBanner: (banner: Banner) => void;
@@ -161,6 +166,16 @@ export const useVolahiStore = create<VolahiStore>()(
       orders: [],
       currentUser: null,
       isAdminAuthenticated: false,
+      categories: [
+        'Designer Sarees',
+        'Wedding Lehengas',
+        'Ethnic Suits',
+        'Western Dresses',
+        'Party Gowns',
+        'Co-ord Sets',
+        'Luxury Loungewear',
+        'Winter Collection',
+      ],
 
       // Asynchronous Global DB Synchronization
       fetchStoreData: async () => {
@@ -226,6 +241,19 @@ export const useVolahiStore = create<VolahiStore>()(
             }
             return p;
           }),
+        })),
+
+      // Category Reducers
+      addCategory: (category) =>
+        set((state) => ({
+          categories: state.categories.includes(category)
+            ? state.categories
+            : [...state.categories, category],
+        })),
+
+      deleteCategory: (category) =>
+        set((state) => ({
+          categories: state.categories.filter((c) => c !== category),
         })),
 
       // Banner Reducers

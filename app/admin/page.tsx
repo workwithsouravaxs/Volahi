@@ -45,7 +45,10 @@ export default function AdminDashboard() {
     toggleBannerStatus,
     setMiddleBanner,
     updateOrderStatus,
-    deleteOrder
+    deleteOrder,
+    categories,
+    addCategory,
+    deleteCategory,
   } = useVolahiStore();
 
   // Route security gate: authorized only
@@ -55,11 +58,14 @@ export default function AdminDashboard() {
     }
   }, [isAdminAuthenticated, router]);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'orders' | 'customers'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'orders' | 'customers' | 'categories'>('dashboard');
   
   // Search & Filter state
   const [productQuery, setProductQuery] = useState('');
   const [orderQuery, setOrderQuery] = useState('');
+
+  // Category Form State
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Product Form overlays/state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -429,6 +435,13 @@ export default function AdminDashboard() {
           >
             <Users className="w-4 h-4" />
             <span>Customers</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('categories')}
+            className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'categories' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Categories <span className="ml-1 text-[9px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded-full">{categories.length}</span></span>
           </button>
         </nav>
 
@@ -1016,6 +1029,90 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* ==================== TAB: CATEGORIES MANAGEMENT ==================== */}
+        {activeTab === 'categories' && (
+          <div className="space-y-8 flex-1">
+            {/* Add New Category */}
+            <div className="bg-white border border-slate-100 shadow-sm rounded p-6">
+              <div className="border-b border-slate-100 pb-4 mb-6">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500">Create New Category</h3>
+                <p className="text-[10px] text-neutral-400 uppercase tracking-wider mt-1">New categories will appear in the product form and filter sidebar automatically.</p>
+              </div>
+              <div className="flex gap-4 max-w-lg">
+                <input
+                  type="text"
+                  placeholder="e.g. Bridal Couture"
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const trimmed = newCategoryName.trim();
+                      if (trimmed) {
+                        addCategory(trimmed);
+                        setNewCategoryName('');
+                      }
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const trimmed = newCategoryName.trim();
+                    if (trimmed) {
+                      addCategory(trimmed);
+                      setNewCategoryName('');
+                    }
+                  }}
+                  className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 transition-all active:scale-[0.98]"
+                >
+                  <Plus className="w-4 h-4" /> Add Category
+                </button>
+              </div>
+            </div>
+
+            {/* Existing Categories List */}
+            <div className="bg-white border border-slate-100 shadow-sm rounded">
+              <div className="p-6 border-b border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500">All Categories ({categories.length})</h3>
+              </div>
+              <div className="divide-y divide-slate-50">
+                {categories.map((cat) => {
+                  const productCount = products.filter(p => p.category === cat).length;
+                  return (
+                    <div key={cat} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-2 h-2 rounded-full bg-cta" />
+                        <div>
+                          <p className="text-sm font-bold text-slate-800 uppercase tracking-wider">{cat}</p>
+                          <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest mt-0.5">{productCount} product{productCount !== 1 ? 's' : ''} assigned</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (productCount > 0) {
+                            if (!confirm(`"${cat}" has ${productCount} product(s) assigned. Delete category anyway?`)) return;
+                          }
+                          deleteCategory(cat);
+                        }}
+                        className="p-2 text-slate-400 hover:text-red-600 transition-colors border border-slate-100 rounded hover:bg-red-50"
+                        title="Delete category"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+                {categories.length === 0 && (
+                  <div className="py-20 text-center text-xs text-neutral-400 uppercase tracking-widest">
+                    No categories configured. Add one above.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
 
       {/* ==================== PRODUCT FORM MODAL OVERLAY ==================== */}
@@ -1057,14 +1154,9 @@ export default function AdminDashboard() {
                     value={pCategory}
                     onChange={(e) => setPCategory(e.target.value)}
                   >
-                    <option value="Designer Sarees">Designer Sarees</option>
-                    <option value="Wedding Lehengas">Wedding Lehengas</option>
-                    <option value="Ethnic Suits">Ethnic Suits</option>
-                    <option value="Western Dresses">Western Dresses</option>
-                    <option value="Party Gowns">Party Gowns</option>
-                    <option value="Co-ord Sets">Co-ord Sets</option>
-                    <option value="Luxury Loungewear">Luxury Loungewear</option>
-                    <option value="Winter Collection">Winter Collection</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
                 </div>
               </div>

@@ -3,7 +3,6 @@
 import React, { useState, useMemo, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import { useVolahiStore } from '@/lib/store';
-import { categories } from '@/lib/data'; // fallback list of standard categories
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, ShoppingCart, Heart, Search, X } from 'lucide-react';
 import Link from 'next/link';
@@ -13,7 +12,7 @@ function ProductCatalogContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
   
-  const { products, toggleWishlist, wishlist, addToCart } = useVolahiStore();
+  const { products, toggleWishlist, wishlist, addToCart, categories } = useVolahiStore();
 
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,7 +200,7 @@ function ProductCatalogContent() {
         {/* Product Grid */}
         <div className="flex-1">
           {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-16">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-16">
               {filteredProducts.map((product) => (
                 <motion.div 
                   layout

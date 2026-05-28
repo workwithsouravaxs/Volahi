@@ -41,7 +41,7 @@ export default function Navbar() {
             Volahi
           </Link>
           
-          <div className="hidden md:flex items-center gap-8 text-[9px] font-bold uppercase tracking-[0.3em]">
+          <div className="hidden md:flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.3em]">
             <Link href="/products?category=Designer Sarees" className="hover:text-cta transition-colors">Sarees</Link>
             <Link href="/products?category=Wedding Lehengas" className="hover:text-cta transition-colors">Lehengas</Link>
             <Link href="/products?category=Western Dresses" className="hover:text-cta transition-colors">Dresses</Link>

@@ -146,7 +146,7 @@ export default function Home() {
                   <h2 className="text-4xl font-heading uppercase tracking-tighter">Shop by Category</h2>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
                   {availableCategories.slice(0, 4).map((cat) => {
                     const sampleProduct = activeProducts.find(p => p.category === cat);
                     return (
@@ -198,7 +198,7 @@ export default function Home() {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
                   {featuredProducts.map((p) => (
                     <div 
                       key={p.id}
@@ -268,7 +268,7 @@ export default function Home() {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
                   {bestSellers.map((p) => (
                     <div 
                       key={p.id}
@@ -338,7 +338,7 @@ export default function Home() {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
                   {newArrivals.map((p) => (
                     <div 
                       key={p.id}
