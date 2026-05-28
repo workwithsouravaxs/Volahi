@@ -24,7 +24,13 @@ import {
   Eye,
   EyeOff,
   Star,
-  Activity
+  Activity,
+  Link2,
+  Instagram,
+  Facebook,
+  Twitter,
+  Youtube,
+  X as XIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -49,6 +55,8 @@ export default function AdminDashboard() {
     categories,
     addCategory,
     deleteCategory,
+    socialLinks,
+    setSocialLink,
   } = useVolahiStore();
 
   // Route security gate: authorized only
@@ -58,7 +66,7 @@ export default function AdminDashboard() {
     }
   }, [isAdminAuthenticated, router]);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'orders' | 'customers' | 'categories'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'orders' | 'customers' | 'categories' | 'social'>('dashboard');
   
   // Search & Filter state
   const [productQuery, setProductQuery] = useState('');
@@ -66,6 +74,9 @@ export default function AdminDashboard() {
 
   // Category Form State
   const [newCategoryName, setNewCategoryName] = useState('');
+
+  // Customer Detail State
+  const [selectedCustomerEmail, setSelectedCustomerEmail] = useState<string | null>(null);
 
   // Product Form overlays/state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -442,6 +453,13 @@ export default function AdminDashboard() {
           >
             <Settings className="w-4 h-4" />
             <span>Categories <span className="ml-1 text-[9px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded-full">{categories.length}</span></span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('social')}
+            className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'social' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
+          >
+            <Link2 className="w-4 h-4" />
+            <span>Social Media</span>
           </button>
         </nav>
 
@@ -991,8 +1009,9 @@ export default function AdminDashboard() {
         {/* ==================== TAB: CUSTOMER DIRECTORY ==================== */}
         {activeTab === 'customers' && (
           <div className="bg-white border border-slate-100 shadow-sm rounded flex-1 flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-slate-50">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500">Registered Customer Database</h3>
+              <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest">{Array.from(new Set(orders.map(o => o.customerEmail))).length} clients</span>
             </div>
 
             <div className="overflow-x-auto flex-1">
@@ -1001,24 +1020,36 @@ export default function AdminDashboard() {
                   <tr>
                     <th className="px-6 py-4">Client Name</th>
                     <th className="px-6 py-4">Registered Email</th>
-                    <th className="px-6 py-4 text-right">Purchases placed</th>
+                    <th className="px-6 py-4">Total Spent</th>
+                    <th className="px-6 py-4 text-right">Orders → View Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 text-xs font-semibold">
                   {Array.from(new Set(orders.map(o => o.customerEmail))).map(email => {
                     const customerOrders = orders.filter(o => o.customerEmail === email);
                     const name = customerOrders[0]?.customerName || 'COUTURE CLIENT';
+                    const totalSpent = customerOrders.reduce((acc, o) => acc + o.total, 0);
                     return (
-                      <tr key={email} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 text-slate-800 uppercase tracking-wider">{name}</td>
+                      <tr 
+                        key={email} 
+                        className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                        onClick={() => setSelectedCustomerEmail(email)}
+                      >
+                        <td className="px-6 py-4 text-slate-800 uppercase tracking-wider font-bold">{name}</td>
                         <td className="px-6 py-4 text-neutral-400 tracking-normal">{email}</td>
-                        <td className="px-6 py-4 text-slate-900 font-bold text-right">{customerOrders.length} Orders</td>
+                        <td className="px-6 py-4 text-slate-800 font-bold">₹{totalSpent.toLocaleString('en-IN')}</td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="inline-flex items-center gap-2 text-[10px] font-bold text-primary group-hover:text-cta transition-colors uppercase tracking-widest">
+                            {customerOrders.length} Orders
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                        </td>
                       </tr>
                     );
                   })}
                   {orders.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="py-20 text-center text-xs text-neutral-400 uppercase tracking-widest">
+                      <td colSpan={4} className="py-20 text-center text-xs text-neutral-400 uppercase tracking-widest">
                         No client profiles cataloged yet.
                       </td>
                     </tr>
@@ -1108,6 +1139,57 @@ export default function AdminDashboard() {
                     No categories configured. Add one above.
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== TAB: SOCIAL MEDIA LINKS ==================== */}
+        {activeTab === 'social' && (
+          <div className="space-y-8 flex-1">
+            <div className="bg-white border border-slate-100 shadow-sm rounded p-6">
+              <div className="border-b border-slate-100 pb-4 mb-6">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500">Social Media Links</h3>
+                <p className="text-[10px] text-neutral-400 uppercase tracking-wider mt-1">These links will appear as clickable icons in the website footer.</p>
+              </div>
+              <div className="space-y-6 max-w-2xl">
+                {([
+                  { key: 'instagram' as const, label: 'Instagram', placeholder: 'https://instagram.com/yourpage', icon: '📸' },
+                  { key: 'facebook' as const, label: 'Facebook', placeholder: 'https://facebook.com/yourpage', icon: '📘' },
+                  { key: 'twitter' as const, label: 'Twitter / X', placeholder: 'https://twitter.com/yourhandle', icon: '🐦' },
+                  { key: 'youtube' as const, label: 'YouTube', placeholder: 'https://youtube.com/@yourchannel', icon: '▶️' },
+                  { key: 'whatsapp' as const, label: 'WhatsApp', placeholder: 'https://wa.me/91XXXXXXXXXX', icon: '💬' },
+                  { key: 'pinterest' as const, label: 'Pinterest', placeholder: 'https://pinterest.com/yourprofile', icon: '📌' },
+                ] as const).map(({ key, label, placeholder, icon }) => (
+                  <div key={key} className="flex items-center gap-4">
+                    <span className="text-xl w-8 text-center flex-shrink-0">{icon}</span>
+                    <div className="flex-1">
+                      <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-1.5">{label}</label>
+                      <div className="flex gap-3">
+                        <input
+                          type="url"
+                          placeholder={placeholder}
+                          className="flex-1 bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary tracking-wide"
+                          value={socialLinks[key]}
+                          onChange={(e) => setSocialLink(key, e.target.value)}
+                        />
+                        {socialLinks[key] && (
+                          <a
+                            href={socialLinks[key]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 rounded text-[10px] font-bold uppercase tracking-wider text-neutral-500 hover:text-primary hover:border-primary transition-all"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" /> Test
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <p className="text-[10px] text-neutral-400 uppercase tracking-widest">✅ Changes save instantly and appear in the footer on all pages.</p>
               </div>
             </div>
           </div>
@@ -1645,6 +1727,105 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* ==================== CUSTOMER DETAIL MODAL ==================== */}
+      {selectedCustomerEmail && (() => {
+        const customerOrders = orders.filter(o => o.customerEmail === selectedCustomerEmail);
+        const customer = customerOrders[0];
+        const totalSpent = customerOrders.reduce((acc, o) => acc + o.total, 0);
+        return (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-start py-10 px-4">
+            <div className="bg-white w-full max-w-3xl shadow-2xl border border-slate-100 relative overflow-hidden">
+              {/* Header */}
+              <div className="flex items-start justify-between p-8 border-b border-slate-100 bg-slate-900 text-white">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-neutral-400 mb-1">Client Profile</p>
+                  <h3 className="text-2xl font-heading uppercase tracking-tighter">{customer?.customerName || 'Client'}</h3>
+                  <p className="text-neutral-400 text-xs mt-1 tracking-wider">{selectedCustomerEmail}</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedCustomerEmail(null)}
+                  className="text-neutral-400 hover:text-white transition-colors mt-1"
+                >
+                  <XIcon className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Profile Info */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-slate-100">
+                <div className="p-5 border-r border-slate-100">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Total Orders</p>
+                  <p className="text-2xl font-heading font-bold text-slate-800">{customerOrders.length}</p>
+                </div>
+                <div className="p-5 border-r border-slate-100">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Total Spent</p>
+                  <p className="text-2xl font-heading font-bold text-slate-800">₹{totalSpent.toLocaleString('en-IN')}</p>
+                </div>
+                <div className="p-5 border-r border-slate-100">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Phone</p>
+                  <p className="text-sm font-bold text-slate-800">{customer?.shippingDetails?.phone || '—'}</p>
+                </div>
+                <div className="p-5">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">City</p>
+                  <p className="text-sm font-bold text-slate-800">{customer?.shippingDetails?.city || '—'}</p>
+                </div>
+              </div>
+
+              {/* Address */}
+              {customer?.shippingDetails?.address && (
+                <div className="px-8 py-4 bg-slate-50 border-b border-slate-100">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Delivery Address</p>
+                  <p className="text-xs font-semibold text-slate-700">{customer.shippingDetails.address}, {customer.shippingDetails.city} — {customer.shippingDetails.zipCode}</p>
+                </div>
+              )}
+
+              {/* Order History */}
+              <div className="p-8">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-4">Order History</h4>
+                <div className="space-y-3">
+                  {customerOrders.map((order) => (
+                    <div key={order.id} className="border border-slate-100 rounded overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{order.id}</span>
+                          <span className="text-[9px] text-neutral-400 font-semibold">{order.date}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm ${
+                            order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                            order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
+                            order.status === 'Processing' || order.status === 'Approved' ? 'bg-amber-100 text-amber-700' :
+                            order.status === 'Cancelled' || order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>{order.status}</span>
+                          <span className="text-xs font-bold text-slate-800">₹{order.total.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                      <div className="px-4 py-3 space-y-1">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-[11px] text-neutral-600">
+                            <span className="font-semibold">{item.product.name}</span>
+                            <span className="text-neutral-400">{item.selectedSize} / {item.selectedColor} × {item.quantity}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="px-8 py-4 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => setSelectedCustomerEmail(null)}
+                  className="px-6 py-2.5 border border-slate-200 rounded text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { ArrowRight, Star, ShoppingCart, Zap, Heart, Sparkles, ChevronLeft, Chev
 import Link from 'next/link';
 
 export default function Home() {
-  const { products, banners, middleBanner, toggleWishlist, wishlist, addToCart } = useVolahiStore();
+  const { products, banners, middleBanner, toggleWishlist, wishlist, addToCart, socialLinks } = useVolahiStore();
 
   const [activeBannerIdx, setActiveBannerIdx] = useState(0);
 
@@ -404,10 +404,36 @@ export default function Home() {
             <p className="text-neutral-400 text-xs leading-[2] tracking-widest">
               Empowering dynamic lifestyle couture through dynamic, elegant, custom design structures.
             </p>
-            <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-cta transition-colors cursor-pointer text-xs font-bold uppercase">In</div>
-              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-cta transition-colors cursor-pointer text-xs font-bold uppercase">Ig</div>
-              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-cta transition-colors cursor-pointer text-xs font-bold uppercase">Tw</div>
+            <div className="flex gap-3 flex-wrap">
+              {([
+                { key: 'instagram' as const, label: 'Ig' },
+                { key: 'facebook' as const, label: 'Fb' },
+                { key: 'twitter' as const, label: 'Tw' },
+                { key: 'youtube' as const, label: 'Yt' },
+                { key: 'whatsapp' as const, label: 'Wa' },
+                { key: 'pinterest' as const, label: 'Pt' },
+              ] as const).map(({ key, label }) =>
+                socialLinks[key] ? (
+                  <a
+                    key={key}
+                    href={socialLinks[key]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-cta transition-colors text-xs font-bold uppercase"
+                    title={key}
+                  >
+                    {label}
+                  </a>
+                ) : (
+                  <div
+                    key={key}
+                    className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold uppercase text-white/20 cursor-default"
+                    title={`${key} (not configured)`}
+                  >
+                    {label}
+                  </div>
+                )
+              )}
             </div>
           </div>
           

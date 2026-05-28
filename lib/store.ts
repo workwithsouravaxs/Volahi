@@ -109,6 +109,14 @@ interface VolahiStore {
   currentUser: User | null;
   isAdminAuthenticated: boolean;
   categories: string[];
+  socialLinks: {
+    instagram: string;
+    facebook: string;
+    twitter: string;
+    youtube: string;
+    whatsapp: string;
+    pinterest: string;
+  };
 
   // Product Actions
   addProduct: (product: Omit<Product, 'reviews'>) => void;
@@ -119,6 +127,9 @@ interface VolahiStore {
   // Category Actions
   addCategory: (category: string) => void;
   deleteCategory: (category: string) => void;
+
+  // Social Links Actions
+  setSocialLink: (platform: keyof VolahiStore['socialLinks'], url: string) => void;
 
   // Banner Actions
   addBanner: (banner: Banner) => void;
@@ -176,6 +187,14 @@ export const useVolahiStore = create<VolahiStore>()(
         'Luxury Loungewear',
         'Winter Collection',
       ],
+      socialLinks: {
+        instagram: '',
+        facebook: '',
+        twitter: '',
+        youtube: '',
+        whatsapp: '',
+        pinterest: '',
+      },
 
       // Asynchronous Global DB Synchronization
       fetchStoreData: async () => {
@@ -254,6 +273,12 @@ export const useVolahiStore = create<VolahiStore>()(
       deleteCategory: (category) =>
         set((state) => ({
           categories: state.categories.filter((c) => c !== category),
+        })),
+
+      // Social Links Reducers
+      setSocialLink: (platform, url) =>
+        set((state) => ({
+          socialLinks: { ...state.socialLinks, [platform]: url },
         })),
 
       // Banner Reducers

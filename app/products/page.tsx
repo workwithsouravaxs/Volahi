@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { useVolahiStore } from '@/lib/store';
 import { motion } from 'framer-motion';
@@ -15,11 +15,19 @@ function ProductCatalogContent() {
   const { products, toggleWishlist, wishlist, addToCart, categories } = useVolahiStore();
 
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [priceRange, setPriceRange] = useState(150000);
   const [selectedSize, setSelectedSize] = useState('All');
   const [selectedColor, setSelectedColor] = useState('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Sync category & search from URL changes (e.g. Navbar CTAs)
+  useEffect(() => {
+    const cat = searchParams.get('category') || 'All';
+    const search = searchParams.get('search') || '';
+    setSelectedCategory(cat);
+    setSearchQuery(search);
+  }, [searchParams]);
 
   // Derive unique colors and sizes from active products in the store
   const activeProducts = products.filter(p => p.status === 'Active');
@@ -90,9 +98,69 @@ function ProductCatalogContent() {
         </div>
       </div>
 
+      {/* Mobile Filter Overlay */}
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div 
+            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
+            onClick={() => setIsFilterOpen(false)}
+          />
+          <div className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white shadow-2xl overflow-y-auto p-8 space-y-10">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-neutral-500">Refine</span>
+              <button onClick={() => setIsFilterOpen(false)} className="text-neutral-400 hover:text-primary transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {/* Category */}
+            <div>
+              <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400 mb-6">Categories</h3>
+              <div className="flex flex-col gap-3.5">
+                <button onClick={() => { setSelectedCategory('All'); setIsFilterOpen(false); }} className={`text-left text-[10px] font-bold uppercase tracking-[0.2em] transition-all pb-1.5 border-b ${selectedCategory === 'All' ? 'border-primary text-primary' : 'border-transparent text-neutral-400 hover:text-primary'}`}>All Creations</button>
+                {categories.map(cat => (
+                  <button key={cat} onClick={() => { setSelectedCategory(cat); setIsFilterOpen(false); }} className={`text-left text-[10px] font-bold uppercase tracking-[0.2em] transition-all pb-1.5 border-b ${selectedCategory === cat ? 'border-primary text-primary' : 'border-transparent text-neutral-400 hover:text-primary'}`}>{cat}</button>
+                ))}
+              </div>
+            </div>
+            {/* Price */}
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400">Price</h3>
+                <span className="text-[10px] font-bold text-cta">₹{priceRange.toLocaleString()}</span>
+              </div>
+              <input type="range" min="1000" max="250000" step="1000" value={priceRange} onChange={(e) => setPriceRange(parseInt(e.target.value))} className="w-full h-1 bg-neutral-100 appearance-none cursor-pointer accent-primary" />
+            </div>
+            {/* Sizes */}
+            {allAvailableSizes.length > 0 && (
+              <div>
+                <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400 mb-6">Sizes</h3>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setSelectedSize('All')} className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedSize === 'All' ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}>All</button>
+                  {allAvailableSizes.map(size => (<button key={size} onClick={() => setSelectedSize(size)} className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedSize === size ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}>{size}</button>))}
+                </div>
+              </div>
+            )}
+            {/* Colors */}
+            {allAvailableColors.length > 0 && (
+              <div>
+                <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400 mb-6">Colors</h3>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setSelectedColor('All')} className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedColor === 'All' ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}>All</button>
+                  {allAvailableColors.map(color => (<button key={color} onClick={() => setSelectedColor(color)} className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedColor === color ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}>{color}</button>))}
+                </div>
+              </div>
+            )}
+            {/* Reset */}
+            <div className="pt-4 border-t border-neutral-100">
+              <button onClick={() => { setSelectedCategory('All'); setPriceRange(150000); setSearchQuery(''); setSelectedSize('All'); setSelectedColor('All'); }} className="text-[9px] font-bold uppercase tracking-[0.4em] text-cta hover:underline">Reset Selection</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-20">
-        {/* Filters - Sidebar Desktop */}
-        <aside className={`lg:w-72 space-y-12 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
+        {/* Filters - Sidebar Desktop only */}
+        <aside className="lg:w-72 space-y-12 hidden lg:block">
           {/* Category Filter */}
           <div>
             <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400 mb-6">Categories</h3>
