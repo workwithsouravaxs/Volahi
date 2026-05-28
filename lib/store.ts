@@ -29,6 +29,7 @@ export interface Product {
   price: number;
   discountPrice?: number;
   images: string[];
+  imagePosition?: string[]; // per-image CSS object-position (e.g. 'center', 'top', '30% 20%')
   image: string; // primary image
   stock: number;
   sku: string;

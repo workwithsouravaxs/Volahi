@@ -283,6 +283,7 @@ function ProductCatalogContent() {
                         src={product.image} 
                         alt={product.name}
                         className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5]"
+                        style={{ objectPosition: product.imagePosition?.[0] ?? 'center 50%' }}
                       />
                     </Link>
                     {/* Size Hover Overlay */}

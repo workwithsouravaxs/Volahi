@@ -101,6 +101,7 @@ function ProductDetailsContent() {
             <img 
               src={product.images[activeImage] || product.image} 
               className="w-full h-full object-cover grayscale-[0.05]"
+              style={{ objectPosition: product.imagePosition?.[activeImage] ?? 'center 50%' }}
               alt={product.name}
             />
           </motion.div>
@@ -113,7 +114,7 @@ function ProductDetailsContent() {
                   className={`aspect-[3/4] overflow-hidden cursor-pointer border transition-all rounded ${activeImage === i ? 'border-primary' : 'border-neutral-100 hover:border-neutral-300'}`}
                   onClick={() => setActiveImage(i)}
                 >
-                  <img src={img} className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity" alt="" />
+                  <img src={img} className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity" style={{ objectPosition: product.imagePosition?.[i] ?? 'center 50%' }} alt="" />
                 </div>
               ))}
             </div>
@@ -389,6 +390,7 @@ function ProductDetailsContent() {
                   <img 
                     src={p.image} 
                     className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5]" 
+                    style={{ objectPosition: p.imagePosition?.[0] ?? 'center 50%' }}
                     alt={p.name} 
                   />
                   {/* Size Hover Overlay */}

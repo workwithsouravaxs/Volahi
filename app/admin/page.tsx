@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVolahiStore, Product, Banner, Order } from '@/lib/store';
 import { uploadProductImage, uploadBannerImage, verifyAdmin } from '@/lib/supabase';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Users, 
-  ShoppingBag, 
-  Settings, 
-  TrendingUp, 
-  DollarSign, 
-  Plus, 
-  Search, 
+import {
+  LayoutDashboard,
+  Package,
+  Users,
+  ShoppingBag,
+  Settings,
+  TrendingUp,
+  DollarSign,
+  Plus,
+  Search,
   Edit,
   Trash2,
   ExternalLink,
@@ -32,12 +32,12 @@ import Link from 'next/link';
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { 
-    products, 
-    banners, 
+  const {
+    products,
+    banners,
     middleBanner,
-    orders, 
-    isAdminAuthenticated, 
+    orders,
+    isAdminAuthenticated,
     logoutAdmin,
     addProduct,
     editProduct,
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
   }, [isAdminAuthenticated, router]);
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'banners' | 'orders' | 'customers' | 'categories' | 'social'>('dashboard');
-  
+
   // Search & Filter state
   const [productQuery, setProductQuery] = useState('');
   const [orderQuery, setOrderQuery] = useState('');
@@ -90,6 +90,20 @@ export default function AdminDashboard() {
   const [pBrand, setPBrand] = useState('Volahi');
   const [pMaterial, setPMaterial] = useState('');
   const [uploadedProductImages, setUploadedProductImages] = useState<string[]>([]);
+  const [imagePositions, setImagePositions] = useState<string[]>([]);
+  // Refs & state for free crop tool
+  const cropImgRef = useRef<HTMLImageElement>(null);
+  const cropContainerRef = useRef<HTMLDivElement>(null);
+  const [cropModal, setCropModal] = useState<{ index: number; url: string } | null>(null);
+  const [previewAdjustIndex, setPreviewAdjustIndex] = useState<number | null>(null);
+  const [cropBox, setCropBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [cropDragState, setCropDragState] = useState<{
+    mode: 'create' | 'move' | 'resize-tl' | 'resize-tr' | 'resize-bl' | 'resize-br';
+    startX: number; startY: number;
+    origBox: { x: number; y: number; w: number; h: number } | null;
+  } | null>(null);
+  const [cropAspect, setCropAspect] = useState<number | null>(null);
+  const [isApplyingCrop, setIsApplyingCrop] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [pColors, setPColors] = useState(''); // Comma separated
   const [pSizes, setPSizes] = useState<string[]>([]);
@@ -122,7 +136,7 @@ export default function AdminDashboard() {
   const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
-    
+
     // File validation & size safeguard
     const validFiles = files.filter(file => {
       const isValidType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
@@ -153,25 +167,150 @@ export default function AdminDashboard() {
 
   const handleMoveImage = (index: number, direction: 'left' | 'right') => {
     const newImages = [...uploadedProductImages];
+    const newPositions = [...imagePositions];
     const targetIndex = direction === 'left' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newImages.length) return;
-    
+
     // Swap elements
     const temp = newImages[index];
     newImages[index] = newImages[targetIndex];
     newImages[targetIndex] = temp;
-    
+
+    const tempPos = newPositions[index] ?? 'center';
+    newPositions[index] = newPositions[targetIndex] ?? 'center';
+    newPositions[targetIndex] = tempPos;
+
     setUploadedProductImages(newImages);
+    setImagePositions(newPositions);
   };
 
   const handleRemoveImage = (index: number) => {
     setUploadedProductImages(uploadedProductImages.filter((_, i) => i !== index));
+    setImagePositions(imagePositions.filter((_, i) => i !== index));
+    if (cropModal?.index === index) { setCropModal(null); setCropBox(null); }
+  };
+
+  // ── Crop tool helpers ──────────────────────────────────────────────
+  const CROP_HANDLE = 12;
+
+  const getCropRelPos = (e: React.MouseEvent) => {
+    const el = cropContainerRef.current;
+    if (!el) return { x: 0, y: 0 };
+    const rect = el.getBoundingClientRect();
+    return {
+      x: Math.max(0, Math.min(e.clientX - rect.left, rect.width)),
+      y: Math.max(0, Math.min(e.clientY - rect.top, rect.height)),
+    };
+  };
+
+  const getCropHitMode = (pos: { x: number; y: number }, box: NonNullable<typeof cropBox>) => {
+    const { x, y, w, h } = box;
+    if (Math.abs(pos.x - x) <= CROP_HANDLE && Math.abs(pos.y - y) <= CROP_HANDLE) return 'resize-tl' as const;
+    if (Math.abs(pos.x - (x + w)) <= CROP_HANDLE && Math.abs(pos.y - y) <= CROP_HANDLE) return 'resize-tr' as const;
+    if (Math.abs(pos.x - x) <= CROP_HANDLE && Math.abs(pos.y - (y + h)) <= CROP_HANDLE) return 'resize-bl' as const;
+    if (Math.abs(pos.x - (x + w)) <= CROP_HANDLE && Math.abs(pos.y - (y + h)) <= CROP_HANDLE) return 'resize-br' as const;
+    if (pos.x > x + CROP_HANDLE && pos.x < x + w - CROP_HANDLE && pos.y > y + CROP_HANDLE && pos.y < y + h - CROP_HANDLE) return 'move' as const;
+    return 'create' as const;
+  };
+
+  const handleCropMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const pos = getCropRelPos(e);
+    const mode = cropBox && cropBox.w > 10 ? getCropHitMode(pos, cropBox) : 'create';
+    setCropDragState({ mode, startX: pos.x, startY: pos.y, origBox: cropBox ? { ...cropBox } : null });
+    if (mode === 'create') setCropBox({ x: pos.x, y: pos.y, w: 0, h: 0 });
+  };
+
+  const handleCropMouseMove = (e: React.MouseEvent) => {
+    if (!cropDragState) return;
+    e.preventDefault();
+    const pos = getCropRelPos(e);
+    const el = cropContainerRef.current;
+    if (!el) return;
+    const maxW = el.offsetWidth;
+    const maxH = el.offsetHeight;
+    const dx = pos.x - cropDragState.startX;
+    const dy = pos.y - cropDragState.startY;
+
+    if (cropDragState.mode === 'create') {
+      let x = Math.min(cropDragState.startX, pos.x);
+      let y = Math.min(cropDragState.startY, pos.y);
+      let w = Math.abs(dx);
+      let h = Math.abs(dy);
+      if (cropAspect && w > 0) {
+        h = w / cropAspect;
+        if (pos.y < cropDragState.startY) y = cropDragState.startY - h;
+        if (pos.x < cropDragState.startX) x = cropDragState.startX - w;
+      }
+      setCropBox({ x: Math.max(0, x), y: Math.max(0, y), w: Math.min(w, maxW - Math.max(0, x)), h: Math.min(h, maxH - Math.max(0, y)) });
+
+    } else if (cropDragState.mode === 'move' && cropDragState.origBox) {
+      const ob = cropDragState.origBox;
+      setCropBox({ ...ob, x: Math.max(0, Math.min(ob.x + dx, maxW - ob.w)), y: Math.max(0, Math.min(ob.y + dy, maxH - ob.h)) });
+
+    } else if (cropDragState.origBox) {
+      const ob = cropDragState.origBox;
+      let { x, y, w, h } = ob;
+      if (cropDragState.mode === 'resize-br') {
+        w = Math.max(20, ob.w + dx);
+        h = cropAspect ? w / cropAspect : Math.max(20, ob.h + dy);
+      } else if (cropDragState.mode === 'resize-tl') {
+        const nx = Math.max(0, Math.min(ob.x + dx, ob.x + ob.w - 20));
+        const ny = Math.max(0, Math.min(ob.y + dy, ob.y + ob.h - 20));
+        w = ob.w + (ob.x - nx); h = cropAspect ? w / cropAspect : ob.h + (ob.y - ny);
+        x = nx; y = cropAspect ? ob.y + ob.h - h : ny;
+      } else if (cropDragState.mode === 'resize-tr') {
+        w = Math.max(20, ob.w + dx);
+        const ny = Math.max(0, Math.min(ob.y + dy, ob.y + ob.h - 20));
+        h = cropAspect ? w / cropAspect : ob.h + (ob.y - ny);
+        y = cropAspect ? ob.y + ob.h - h : ny;
+      } else if (cropDragState.mode === 'resize-bl') {
+        const nx = Math.max(0, Math.min(ob.x + dx, ob.x + ob.w - 20));
+        w = ob.w + (ob.x - nx); h = cropAspect ? w / cropAspect : Math.max(20, ob.h + dy);
+        x = nx;
+      }
+      if (w > 0 && h > 0) setCropBox({ x: Math.max(0, x), y: Math.max(0, y), w: Math.min(w, maxW - Math.max(0, x)), h: Math.min(h, maxH - Math.max(0, y)) });
+    }
+  };
+
+  const handleCropMouseUp = () => setCropDragState(null);
+
+  const handleApplyCrop = async () => {
+    if (!cropBox || !cropModal || !cropImgRef.current || cropBox.w < 10 || cropBox.h < 10) return;
+    setIsApplyingCrop(true);
+    const img = cropImgRef.current;
+    const displayW = cropContainerRef.current?.offsetWidth || img.offsetWidth;
+    const displayH = cropContainerRef.current?.offsetHeight || img.offsetHeight;
+    const scaleX = img.naturalWidth / displayW;
+    const scaleY = img.naturalHeight / displayH;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(cropBox.w * scaleX);
+    canvas.height = Math.round(cropBox.h * scaleY);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { setIsApplyingCrop(false); return; }
+    ctx.drawImage(img, cropBox.x * scaleX, cropBox.y * scaleY, cropBox.w * scaleX, cropBox.h * scaleY, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(async (blob) => {
+      if (!blob) { setIsApplyingCrop(false); return; }
+      try {
+        const file = new File([blob], `crop-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const newUrl = await uploadProductImage(file);
+        const imgs = [...uploadedProductImages];
+        imgs[cropModal.index] = newUrl;
+        setUploadedProductImages(imgs);
+        const pos = [...imagePositions];
+        while (pos.length <= cropModal.index) pos.push('center 50%');
+        pos[cropModal.index] = 'center 50%';
+        setImagePositions(pos);
+        setCropModal(null); setCropBox(null); setCropDragState(null);
+      } catch { alert('Crop upload failed. Please try again.'); }
+      setIsApplyingCrop(false);
+    }, 'image/jpeg', 0.95);
   };
 
   const handleBannerImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
-    
+
     // Validate size (< 8MB) and type
     const isValidType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
     const isValidSize = file.size <= 8 * 1024 * 1024; // 8MB limit
@@ -197,7 +336,7 @@ export default function AdminDashboard() {
   const handleMiddleBannerImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
-    
+
     const isValidType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
     const isValidSize = file.size <= 8 * 1024 * 1024;
     if (!isValidType) {
@@ -252,6 +391,8 @@ export default function AdminDashboard() {
     setPBrand(p.brand);
     setPMaterial(p.material);
     setUploadedProductImages(p.images);
+    setImagePositions(p.imagePosition || p.images.map(() => 'center'));
+    setCropModal(null); setCropBox(null);
     setPColors(p.colors.join(', '));
     setPSizes(p.sizes);
     setPAllSizesAvailable(p.allSizesAvailable);
@@ -281,6 +422,8 @@ export default function AdminDashboard() {
     setPBrand('Volahi');
     setPMaterial('');
     setUploadedProductImages([]);
+    setImagePositions([]);
+    setCropModal(null); setCropBox(null);
     setPColors('');
     setPSizes([]);
     setPCustomSize('');
@@ -315,6 +458,7 @@ export default function AdminDashboard() {
       price: Number(pPrice),
       discountPrice: pDiscountPrice ? Number(pDiscountPrice) : undefined,
       images: uploadedProductImages.length > 0 ? uploadedProductImages : [primaryImg],
+      imagePosition: imagePositions.length > 0 ? imagePositions : undefined,
       image: primaryImg,
       stock: Number(pStock),
       sku: pSku || 'SKU' + Math.floor(10000 + Math.random() * 90000),
@@ -406,51 +550,51 @@ export default function AdminDashboard() {
             <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-widest mt-0.5">Atelier Admin</p>
           </div>
         </div>
-        
+
         <nav className="flex-1 px-4 space-y-1">
-          <button 
+          <button
             onClick={() => setActiveTab('dashboard')}
             className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'dashboard' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
           >
             <LayoutDashboard className="w-4 h-4" />
             <span>Dashboard</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('products')}
             className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'products' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
           >
             <Package className="w-4 h-4" />
             <span>Products</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('banners')}
             className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'banners' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
           >
             <Image className="w-4 h-4" />
             <span>Hero Banners</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('orders')}
             className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'orders' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
           >
             <ShoppingBag className="w-4 h-4" />
             <span>Orders {pendingOrders > 0 && <span className="ml-auto bg-cta text-white text-[9px] px-1.5 py-0.5 rounded-full">{pendingOrders}</span>}</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('customers')}
             className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'customers' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
           >
             <Users className="w-4 h-4" />
             <span>Customers</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('categories')}
             className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'categories' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
           >
             <Settings className="w-4 h-4" />
             <span>Categories <span className="ml-1 text-[9px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded-full">{categories.length}</span></span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('social')}
             className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'social' ? 'bg-primary text-white shadow-sm' : 'text-neutral-500 hover:bg-slate-50'}`}
           >
@@ -463,7 +607,7 @@ export default function AdminDashboard() {
           <div className="bg-slate-900 rounded-xl p-4 text-white">
             <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Authenticated</p>
             <p className="font-heading font-semibold text-sm">Director Session</p>
-            <button 
+            <button
               onClick={() => {
                 logoutAdmin();
                 router.push('/admin/login');
@@ -485,13 +629,13 @@ export default function AdminDashboard() {
               {activeTab === 'dashboard' ? 'Overview Analytics' : `${activeTab} Management`}
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <Link href="/" target="_blank" className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-all">
               <ExternalLink className="w-4 h-4" /> Live Storefront
             </Link>
             {activeTab === 'products' && (
-              <button 
+              <button
                 onClick={() => {
                   resetProductForm();
                   setIsProductModalOpen(true);
@@ -502,7 +646,7 @@ export default function AdminDashboard() {
               </button>
             )}
             {activeTab === 'banners' && (
-              <button 
+              <button
                 onClick={() => setIsBannerModalOpen(true)}
                 className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 transition-all active:scale-[0.98]"
               >
@@ -570,7 +714,7 @@ export default function AdminDashboard() {
                   <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500">Sales Report Analysis</h3>
                   <span className="text-[10px] font-bold bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded uppercase tracking-wider">Live</span>
                 </div>
-                
+
                 <div className="space-y-4 pt-4">
                   {orders.length === 0 ? (
                     <div className="py-20 text-center text-xs text-neutral-400 uppercase tracking-widest">
@@ -596,7 +740,7 @@ export default function AdminDashboard() {
               {/* Order Status Summary */}
               <div className="lg:col-span-4 bg-white p-6 border border-slate-100 shadow-sm rounded space-y-6">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500">Fulfillment States</h3>
-                
+
                 <div className="space-y-4 pt-4">
                   <div className="flex justify-between items-center border-b border-slate-50 pb-3">
                     <span className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Processing (New)</span>
@@ -623,9 +767,9 @@ export default function AdminDashboard() {
               <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500">Atelier Catalog ({products.length} total)</h3>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search title, category or SKU..." 
+                <input
+                  type="text"
+                  placeholder="Search title, category or SKU..."
                   className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded text-xs font-semibold focus:outline-none focus:border-primary w-full sm:w-64 tracking-wider uppercase placeholder:text-neutral-300"
                   value={productQuery}
                   onChange={(e) => setProductQuery(e.target.value)}
@@ -690,14 +834,14 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button 
+                            <button
                               onClick={() => handleOpenEdit(p)}
                               className="p-2 text-slate-400 hover:text-primary transition-colors border border-slate-100 rounded hover:bg-slate-50"
                               title="Edit piece"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </button>
-                            <button 
+                            <button
                               onClick={() => deleteProduct(p.id)}
                               className="p-2 text-slate-400 hover:text-red-600 transition-colors border border-slate-100 rounded hover:bg-slate-50"
                               title="Delete piece"
@@ -726,7 +870,7 @@ export default function AdminDashboard() {
           <div className="space-y-12 flex-1">
             <div className="bg-white p-6 border border-slate-100 rounded shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-6">Active Homepage Hero Banners</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {banners.map((b) => (
                   <div key={b.id} className="border border-slate-100 shadow-sm rounded overflow-hidden bg-white flex flex-col justify-between">
@@ -738,17 +882,17 @@ export default function AdminDashboard() {
                         <span className="inline-block text-[9px] font-bold uppercase tracking-[0.2em] border border-white/30 px-3 py-1.5 max-w-max bg-white/10 backdrop-blur-sm">{b.ctaText}</span>
                       </div>
                     </div>
-                    
+
                     <div className="p-4 flex items-center justify-between bg-slate-50 border-t border-slate-100">
                       <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">ID: {b.id}</span>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           onClick={() => toggleBannerStatus(b.id)}
                           className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest border rounded transition-all ${b.active ? 'border-green-200 bg-green-50 text-green-700' : 'border-neutral-200 bg-neutral-50 text-neutral-600'}`}
                         >
                           {b.active ? 'Active' : 'Inactive'}
                         </button>
-                        <button 
+                        <button
                           onClick={() => deleteBanner(b.id)}
                           className="p-1.5 text-neutral-400 border border-neutral-200 hover:text-red-500 hover:bg-red-50/50 rounded transition-colors"
                         >
@@ -782,7 +926,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="p-4 flex items-center justify-between bg-slate-50 border-t border-slate-100">
                         <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-widest">Live Middle Banner (ID: {middleBanner.id})</span>
-                        <button 
+                        <button
                           onClick={() => setMiddleBanner(null)}
                           className="px-3 py-1.5 border border-red-200 bg-red-50 text-red-700 text-[9px] font-bold uppercase tracking-widest rounded hover:bg-red-100 transition-colors"
                         >
@@ -806,12 +950,12 @@ export default function AdminDashboard() {
 
                     <label className="block w-full bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-3 hover:bg-neutral-800 transition-colors cursor-pointer text-center rounded">
                       {isUploadingMiddleBanner ? 'Uploading and Syncing...' : 'Select Category Banner File'}
-                      <input 
-                        type="file" 
-                        accept="image/jpeg, image/png, image/webp" 
-                        onChange={handleMiddleBannerImageUpload} 
+                      <input
+                        type="file"
+                        accept="image/jpeg, image/png, image/webp"
+                        onChange={handleMiddleBannerImageUpload}
                         disabled={isUploadingMiddleBanner}
-                        className="hidden" 
+                        className="hidden"
                       />
                     </label>
 
@@ -824,8 +968,8 @@ export default function AdminDashboard() {
 
                   <div>
                     <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">CTA Redirect URL Link</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary uppercase tracking-widest"
                       placeholder="e.g. /products?category=Western Dresses"
                       value={middleCtaLink}
@@ -845,9 +989,9 @@ export default function AdminDashboard() {
               <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-500">Order Logs ({orders.length} total)</h3>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search Order ID, Client Email or Name..." 
+                <input
+                  type="text"
+                  placeholder="Search Order ID, Client Email or Name..."
                   className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded text-xs font-semibold focus:outline-none focus:border-primary w-full sm:w-64 tracking-wider uppercase placeholder:text-neutral-300"
                   value={orderQuery}
                   onChange={(e) => setOrderQuery(e.target.value)}
@@ -898,22 +1042,21 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 text-slate-900 font-bold">₹{o.total.toLocaleString()}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-block px-2.5 py-1 rounded-sm text-[9px] uppercase tracking-widest font-bold ${
-                            o.status === 'Pending Approval' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
-                            o.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
-                            o.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                            o.status === 'Cancelled' ? 'bg-orange-100 text-orange-800' :
-                            o.status === 'Processing' ? 'bg-amber-100 text-amber-800' :
-                            o.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
+                          <span className={`inline-block px-2.5 py-1 rounded-sm text-[9px] uppercase tracking-widest font-bold ${o.status === 'Pending Approval' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
+                              o.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                                o.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                                  o.status === 'Cancelled' ? 'bg-orange-100 text-orange-800' :
+                                    o.status === 'Processing' ? 'bg-amber-100 text-amber-800' :
+                                      o.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
+                                        'bg-green-100 text-green-800'
+                            }`}>
                             {o.status}
                           </span>
                           {o.trackingUrl && (
-                            <a 
-                              href={o.trackingUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
+                            <a
+                              href={o.trackingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className="block text-[8px] text-cta hover:underline font-bold uppercase tracking-widest mt-1"
                             >
                               Track Order ↗
@@ -936,13 +1079,13 @@ export default function AdminDashboard() {
                             </div>
                           ) : o.status === 'Pending Approval' ? (
                             <div className="flex gap-2 justify-end">
-                              <button 
+                              <button
                                 onClick={() => updateOrderStatus(o.id, 'Processing')}
                                 className="px-2.5 py-1.5 bg-emerald-600 text-white rounded text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95"
                               >
                                 Approve
                               </button>
-                              <button 
+                              <button
                                 onClick={() => {
                                   if (confirm("Are you sure you want to reject this order? The customer will see it as Rejected in their order history.")) {
                                     updateOrderStatus(o.id, 'Rejected');
@@ -955,7 +1098,7 @@ export default function AdminDashboard() {
                             </div>
                           ) : (
                             <div className="flex flex-col gap-2 items-end">
-                              <select 
+                              <select
                                 value={o.status}
                                 onChange={(e) => {
                                   const nextStatus = e.target.value as any;
@@ -974,7 +1117,7 @@ export default function AdminDashboard() {
                                 <option value="Delivered">Delivered</option>
                               </select>
                               {o.status === 'Shipped' && (
-                                <button 
+                                <button
                                   onClick={() => {
                                     const url = prompt("Update the Tracking URL Link for this order:", o.trackingUrl || "");
                                     updateOrderStatus(o.id, o.status, url || undefined);
@@ -1026,8 +1169,8 @@ export default function AdminDashboard() {
                     const name = customerOrders[0]?.customerName || 'COUTURE CLIENT';
                     const totalSpent = customerOrders.reduce((acc, o) => acc + o.total, 0);
                     return (
-                      <tr 
-                        key={email} 
+                      <tr
+                        key={email}
                         className="hover:bg-slate-50 transition-colors cursor-pointer group"
                         onClick={() => setSelectedCustomerEmail(email)}
                       >
@@ -1197,7 +1340,7 @@ export default function AdminDashboard() {
       {isProductModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-start py-10 px-4">
           <div className="bg-white w-full max-w-4xl p-8 shadow-2xl border border-slate-100 relative">
-            <button 
+            <button
               onClick={() => {
                 setIsProductModalOpen(false);
                 resetProductForm();
@@ -1216,9 +1359,9 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Product Title</label>
-                  <input 
-                    type="text" 
-                    required 
+                  <input
+                    type="text"
+                    required
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="e.g. Midnight Silk Banarasi"
                     value={pTitle}
@@ -1227,7 +1370,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Category</label>
-                  <select 
+                  <select
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     value={pCategory}
                     onChange={(e) => setPCategory(e.target.value)}
@@ -1243,8 +1386,8 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Subcategory (Optional)</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="e.g. Banarasi, Silk"
                     value={pSubcategory}
@@ -1253,8 +1396,8 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">SKU / Product Code</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="e.g. VLH-SR101"
                     value={pSku}
@@ -1263,9 +1406,9 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Brand Name</label>
-                  <input 
-                    type="text" 
-                    required 
+                  <input
+                    type="text"
+                    required
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     value={pBrand}
                     onChange={(e) => setPBrand(e.target.value)}
@@ -1277,9 +1420,9 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Price (₹)</label>
-                  <input 
-                    type="number" 
-                    required 
+                  <input
+                    type="number"
+                    required
                     min="1"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="18500"
@@ -1289,8 +1432,8 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Discount Price (₹, Optional)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="15000"
                     value={pDiscountPrice || ''}
@@ -1299,9 +1442,9 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Stock Quantity</label>
-                  <input 
-                    type="number" 
-                    required 
+                  <input
+                    type="number"
+                    required
                     min="0"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     value={pStock}
@@ -1310,7 +1453,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Status</label>
-                  <select 
+                  <select
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     value={pStatus}
                     onChange={(e) => setPStatus(e.target.value as any)}
@@ -1330,12 +1473,12 @@ export default function AdminDashboard() {
                   </div>
                   <label className="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-5 py-2.5 hover:bg-neutral-800 transition-colors cursor-pointer text-center rounded">
                     Browse Device Images
-                    <input 
-                      type="file" 
-                      multiple 
-                      accept="image/jpeg, image/png, image/webp" 
-                      onChange={handleProductImageUpload} 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/jpeg, image/png, image/webp"
+                      onChange={handleProductImageUpload}
+                      className="hidden"
                     />
                   </label>
                 </div>
@@ -1348,41 +1491,96 @@ export default function AdminDashboard() {
 
                 {uploadedProductImages.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-                    {uploadedProductImages.map((url, index) => (
-                      <div key={url + index} className="group relative aspect-[3/4] border border-neutral-200/60 overflow-hidden bg-white rounded flex flex-col justify-between shadow-sm">
-                        <img src={url} className="w-full h-full object-cover" alt="" />
-                        <div className="absolute inset-x-0 bottom-0 bg-neutral-900/80 backdrop-blur-sm p-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                          <div className="flex gap-1.5">
-                            <button 
-                              type="button" 
-                              disabled={index === 0}
-                              onClick={() => handleMoveImage(index, 'left')}
-                              className="text-[9px] font-bold text-white bg-white/10 hover:bg-white/20 w-5 h-5 flex items-center justify-center rounded disabled:opacity-30"
-                              title="Move Left"
-                            >
-                              ←
-                            </button>
-                            <button 
-                              type="button" 
-                              disabled={index === uploadedProductImages.length - 1}
-                              onClick={() => handleMoveImage(index, 'right')}
-                              className="text-[9px] font-bold text-white bg-white/10 hover:bg-white/20 w-5 h-5 flex items-center justify-center rounded disabled:opacity-30"
-                              title="Move Right"
-                            >
-                              →
-                            </button>
+                    {uploadedProductImages.map((url, index) => {
+                      const pos = imagePositions[index] ?? 'center';
+
+                      // Parse vertical % for preview display
+                      const parseVertical = (p: string): number => {
+                        if (p === 'top') return 0;
+                        if (p === 'center') return 50;
+                        if (p === 'bottom') return 100;
+                        const parts = p.split(' ');
+                        const v = parts.length >= 2 ? parts[1] : parts[0];
+                        return parseInt(v) || 50;
+                      };
+                      const vertPct = parseVertical(pos);
+
+                      return (
+                        <div key={url + index} className="group relative border border-neutral-200/60 overflow-hidden bg-white rounded shadow-sm flex flex-col">
+                          {/* Image thumbnail */}
+                          <div className="relative aspect-[3/4] overflow-hidden bg-neutral-50">
+                            <img
+                              src={url}
+                              className="w-full h-full object-cover transition-all duration-300"
+                              style={{ objectPosition: `center ${vertPct}%` }}
+                              alt=""
+                            />
+
+                            {/* Primary badge */}
+                            {index === 0 && (
+                              <span className="absolute top-2 left-2 bg-primary text-white text-[7px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm shadow">
+                                Primary
+                              </span>
+                            )}
+
+                            {/* Actions overlay top-right */}
+                            <div className="absolute top-2 right-2 flex gap-1 z-10">
+                              {/* ✂ Crop button */}
+                              <button
+                                type="button"
+                                onClick={() => setCropModal({ index, url })}
+                                className="text-[7px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-sm shadow transition-all bg-white/90 text-slate-700 hover:bg-amber-500 hover:text-white border border-neutral-200"
+                                title="Free crop"
+                              >
+                                ✂ Crop
+                              </button>
+                              {/* 👁 Position button */}
+                              <button
+                                type="button"
+                                onClick={() => setPreviewAdjustIndex(index)}
+                                className="text-[7px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-sm shadow transition-all bg-white/90 text-slate-700 hover:bg-amber-500 hover:text-white border border-neutral-200"
+                                title="Position / focal point"
+                              >
+                                👁 Position
+                              </button>
+                            </div>
+
+                            {/* Hover action row */}
+                            <div className="absolute inset-x-0 bottom-0 bg-neutral-900/80 backdrop-blur-sm p-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                              <div className="flex gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={index === 0}
+                                  onClick={() => handleMoveImage(index, 'left')}
+                                  className="text-[9px] font-bold text-white bg-white/10 hover:bg-white/20 w-5 h-5 flex items-center justify-center rounded disabled:opacity-30"
+                                  title="Move Left"
+                                >
+                                  ←
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={index === uploadedProductImages.length - 1}
+                                  onClick={() => handleMoveImage(index, 'right')}
+                                  className="text-[9px] font-bold text-white bg-white/10 hover:bg-white/20 w-5 h-5 flex items-center justify-center rounded disabled:opacity-30"
+                                  title="Move Right"
+                                >
+                                  →
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(index)}
+                                className="text-[9px] font-bold text-red-400 hover:text-red-500 bg-white/10 hover:bg-white/20 w-5 h-5 flex items-center justify-center rounded"
+                                title="Remove"
+                              >
+                                ✕
+                              </button>
+                            </div>
                           </div>
-                          <button 
-                            type="button" 
-                            onClick={() => handleRemoveImage(index)}
-                            className="text-[9px] font-bold text-red-400 hover:text-red-500 bg-white/10 hover:bg-white/20 w-5 h-5 flex items-center justify-center rounded"
-                            title="Remove"
-                          >
-                            ✕
-                          </button>
+
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-10 text-neutral-400 text-[10px] font-semibold uppercase tracking-widest border border-dashed border-neutral-200 rounded bg-white">
@@ -1395,8 +1593,8 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-1 gap-6 md:col-span-2">
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Colors Options (Comma-separated)</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="Navy Blue, Deep Crimson, Emerald Green"
                     value={pColors}
@@ -1410,7 +1608,7 @@ export default function AdminDashboard() {
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Atelier Size Allocations</span>
                   <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-700 cursor-pointer">
-                    <input 
+                    <input
                       type="checkbox"
                       checked={pAllSizesAvailable}
                       onChange={(e) => setPAllSizesAvailable(e.target.checked)}
@@ -1422,7 +1620,7 @@ export default function AdminDashboard() {
 
                 <div className="flex flex-wrap gap-2 mb-4">
                   {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'OS'].map((size) => (
-                    <button 
+                    <button
                       key={size}
                       type="button"
                       onClick={() => handleToggleSize(size)}
@@ -1434,15 +1632,15 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex gap-2 max-w-xs">
-                  <input 
-                    type="text" 
-                    placeholder="Enter custom size (e.g. 38, Custom)" 
+                  <input
+                    type="text"
+                    placeholder="Enter custom size (e.g. 38, Custom)"
                     className="bg-white border border-slate-200 rounded p-2 text-xs font-semibold focus:outline-none w-full"
                     value={pCustomSize}
                     onChange={(e) => setPCustomSize(e.target.value)}
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={handleAddCustomSize}
                     className="bg-primary text-white px-3 font-bold text-xs rounded hover:bg-neutral-800"
                   >
@@ -1458,9 +1656,9 @@ export default function AdminDashboard() {
               {/* Toggles */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                 <label className="flex items-center gap-3 border p-3 rounded bg-white hover:bg-slate-50/50 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={pFeatured} 
+                  <input
+                    type="checkbox"
+                    checked={pFeatured}
                     onChange={(e) => setPFeatured(e.target.checked)}
                     className="rounded text-primary border-slate-200 focus:ring-0"
                   />
@@ -1471,9 +1669,9 @@ export default function AdminDashboard() {
                 </label>
 
                 <label className="flex items-center gap-3 border p-3 rounded bg-white hover:bg-slate-50/50 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={pBestSeller} 
+                  <input
+                    type="checkbox"
+                    checked={pBestSeller}
                     onChange={(e) => setPBestSeller(e.target.checked)}
                     className="rounded text-primary border-slate-200 focus:ring-0"
                   />
@@ -1484,9 +1682,9 @@ export default function AdminDashboard() {
                 </label>
 
                 <label className="flex items-center gap-3 border p-3 rounded bg-white hover:bg-slate-50/50 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={pNewArrival} 
+                  <input
+                    type="checkbox"
+                    checked={pNewArrival}
                     onChange={(e) => setPNewArrival(e.target.checked)}
                     className="rounded text-primary border-slate-200 focus:ring-0"
                   />
@@ -1500,8 +1698,8 @@ export default function AdminDashboard() {
               {/* Description & Narrative */}
               <div>
                 <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Couture Narrative (Description)</label>
-                <textarea 
-                  required 
+                <textarea
+                  required
                   rows={4}
                   className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                   placeholder="Describe the silhouette, cut, artistic craftsmanship..."
@@ -1514,9 +1712,9 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Fabric / Material Composition Details</label>
-                  <input 
-                    type="text" 
-                    required 
+                  <input
+                    type="text"
+                    required
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="e.g. 100% Pure Mulberry Silk, Georgette crepe"
                     value={pMaterial}
@@ -1525,9 +1723,9 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Couture Care Instructions</label>
-                  <input 
-                    type="text" 
-                    required 
+                  <input
+                    type="text"
+                    required
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="e.g. Dry clean only, store in cloth hanger"
                     value={pCare}
@@ -1540,8 +1738,8 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Product Tags (Comma-separated)</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="Silk, Wedding, Banarasi, Exclusive"
                     value={pTags}
@@ -1550,8 +1748,8 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Artisanal Features (Comma-separated)</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="Handwoven borders, Antique Gold Zari embroidery"
                     value={pFeatures}
@@ -1564,9 +1762,9 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Shipping Information</label>
-                  <input 
-                    type="text" 
-                    required 
+                  <input
+                    type="text"
+                    required
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     value={pShipping}
                     onChange={(e) => setPShipping(e.target.value)}
@@ -1574,9 +1772,9 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Return & Exchange Policy</label>
-                  <input 
-                    type="text" 
-                    required 
+                  <input
+                    type="text"
+                    required
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     value={pReturn}
                     onChange={(e) => setPReturn(e.target.value)}
@@ -1585,8 +1783,8 @@ export default function AdminDashboard() {
               </div>
 
               <div className="border-t pt-6 flex justify-end gap-4">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => {
                     setIsProductModalOpen(false);
                     resetProductForm();
@@ -1595,8 +1793,8 @@ export default function AdminDashboard() {
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="px-6 py-3 bg-primary text-white rounded text-xs font-bold uppercase tracking-wider hover:bg-neutral-800"
                 >
                   {editingProduct ? 'Commit Updates' : 'Add piece to Collection'}
@@ -1607,11 +1805,352 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ==================== HERO BANNER CREATE MODAL OVERLAY ==================== */}
+
+
+
+
+
+
+      {/* ==================== IMAGE PREVIEW & FOCAL POINT ADJUSTER MODAL ==================== */}
+      {previewAdjustIndex !== null && (() => {
+        const idx = previewAdjustIndex;
+        const url = uploadedProductImages[idx] || '';
+        const pos = imagePositions[idx] ?? 'center';
+
+        const parseVertical = (p: string): number => {
+          if (p === 'top') return 0;
+          if (p === 'center') return 50;
+          if (p === 'bottom') return 100;
+          const parts = p.split(' ');
+          const v = parts.length >= 2 ? parts[1] : parts[0];
+          return parseInt(v) || 50;
+        };
+
+        const vertPct = parseVertical(pos);
+
+        const setVertPct = (pct: number) => {
+          const newPositions = [...imagePositions];
+          while (newPositions.length <= idx) {
+            newPositions.push('center');
+          }
+          newPositions[idx] = `center ${pct}%`;
+          setImagePositions(newPositions);
+        };
+
+        const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickY = e.clientY - rect.top;
+          const pct = Math.round((clickY / rect.height) * 100);
+          setVertPct(Math.max(0, Math.min(100, pct)));
+        };
+
+        return (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-white w-full max-w-5xl rounded-lg shadow-2xl overflow-hidden flex flex-col" style={{ maxHeight: '90vh' }}>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-900 text-white flex-shrink-0">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-neutral-400 mb-0.5">Image Preview & Focal Point Adjuster</p>
+                  <h3 className="text-lg font-heading uppercase tracking-tighter">
+                    Image {idx + 1} of {uploadedProductImages.length}{idx === 0 ? ' — Primary' : ''}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewAdjustIndex(null)}
+                  className="text-neutral-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+
+                {/* LEFT — Large clickable preview (Detail Page view 2:3) */}
+                <div className="flex-1 bg-neutral-950 flex flex-col items-center justify-center p-6 gap-3 overflow-auto">
+                  <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-neutral-500 mb-1">Detail Page View — Click to set focal point</p>
+
+                  <div
+                    className="relative overflow-hidden rounded bg-neutral-900 cursor-crosshair shadow-lg"
+                    style={{ width: '100%', maxWidth: '340px', aspectRatio: '2/3' }}
+                    onClick={handleImageClick}
+                  >
+                    <img
+                      src={url}
+                      className="w-full h-full object-cover select-none"
+                      style={{ objectPosition: `center ${vertPct}%` }}
+                      alt=""
+                      draggable={false}
+                    />
+
+                    {/* Focal point crosshair indicator */}
+                    <div
+                      className="absolute left-0 right-0 pointer-events-none"
+                      style={{ top: `${vertPct}%`, transform: 'translateY(-50%)' }}
+                    >
+                      {/* Horizontal line */}
+                      <div className="w-full border-t-2 border-dashed border-amber-400/70" />
+                      {/* Center dot */}
+                      <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-amber-400 bg-amber-400/30 shadow-lg" />
+                    </div>
+
+                    {/* Instruction overlay */}
+                    <div className="absolute bottom-3 left-3 right-3 text-center">
+                      <span className="text-[7px] font-bold uppercase tracking-widest text-white/60 bg-black/40 px-2 py-1 rounded">
+                        Click anywhere to set focal point
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[7px] text-neutral-600 uppercase tracking-widest">Focal point: {vertPct}% from top</p>
+                </div>
+
+                {/* RIGHT — Controls + Card preview */}
+                <div className="w-full lg:w-80 flex-shrink-0 flex flex-col bg-white border-t lg:border-t-0 lg:border-l border-slate-100 overflow-auto">
+
+                  {/* Card Preview (4:5) */}
+                  <div className="p-5 border-b border-slate-100">
+                    <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-3">Product Card Preview (4:5)</p>
+                    <div
+                      className="relative overflow-hidden rounded bg-neutral-100 mx-auto"
+                      style={{ width: '140px', aspectRatio: '4/5' }}
+                    >
+                      <img
+                        src={url}
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: `center ${vertPct}%` }}
+                        alt=""
+                      />
+                    </div>
+                  </div>
+
+                  {/* Slider Controls */}
+                  <div className="p-5 space-y-5 flex-1">
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-500">Vertical Focal Point</label>
+                        <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">{vertPct}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={vertPct}
+                        onChange={(e) => setVertPct(Number(e.target.value))}
+                        className="w-full h-2 rounded-full accent-amber-500 cursor-pointer"
+                      />
+                      <div className="flex justify-between text-[7px] text-neutral-300 font-bold uppercase tracking-widest mt-1">
+                        <span>Top (0%)</span>
+                        <span>Bottom (100%)</span>
+                      </div>
+                    </div>
+
+                    {/* Preset buttons */}
+                    <div>
+                      <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Quick Presets</p>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {([['Top', 0], ['Upper', 25], ['Center', 50], ['Lower', 75], ['Bottom', 100]] as [string, number][]).map(([label, val]) => (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={() => setVertPct(val)}
+                            className={`text-[7px] font-bold uppercase tracking-wide py-2 rounded transition-all ${
+                              vertPct === val
+                                ? 'bg-amber-500 text-white shadow'
+                                : 'bg-slate-100 text-neutral-500 hover:bg-amber-50 hover:text-amber-700'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Nav between images */}
+                    {uploadedProductImages.length > 1 && (
+                      <div>
+                        <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Navigate Images</p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => setPreviewAdjustIndex(idx - 1)}
+                            className="flex-1 py-2 text-[8px] font-bold uppercase tracking-widest border rounded hover:bg-slate-50 disabled:opacity-30 transition-all"
+                          >
+                            ← Prev
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === uploadedProductImages.length - 1}
+                            onClick={() => setPreviewAdjustIndex(idx + 1)}
+                            className="flex-1 py-2 text-[8px] font-bold uppercase tracking-widest border rounded hover:bg-slate-50 disabled:opacity-30 transition-all"
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Done button */}
+                  <div className="p-5 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewAdjustIndex(null)}
+                      className="w-full py-3 bg-primary text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-neutral-800 transition-colors"
+                    >
+                      ✓ Save & Close Preview
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      {/* ==================== FREE CROP TOOL MODAL ==================== */}
+      {cropModal && (() => {
+        const ASPECTS: [string, number | null][] = [['Free', null], ['3:4', 3/4], ['4:5', 4/5], ['1:1', 1], ['16:9', 16/9]];
+        const hasCrop = cropBox !== null && cropBox.w > 4 && cropBox.h > 4;
+        return (
+          <div className="fixed inset-0 z-[70] bg-black/90 backdrop-blur-sm flex items-center justify-center p-3">
+            <div
+              className="bg-slate-900 w-full max-w-5xl rounded-xl shadow-2xl flex flex-col border border-slate-700"
+              style={{ maxHeight: '94vh' }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-700 flex-shrink-0 gap-4 flex-wrap">
+                <div>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-amber-400 mb-0.5">Free Crop Tool</p>
+                  <p className="text-white text-xs font-bold uppercase tracking-tight">Drag to select · Drag corners to resize · Drag inside to move</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Aspect ratio lock */}
+                  {ASPECTS.map(([lbl, ratio]) => (
+                    <button
+                      key={lbl}
+                      type="button"
+                      onClick={() => { setCropAspect(ratio); setCropBox(null); }}
+                      className={`text-[7px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded border transition-all ${
+                        cropAspect === ratio
+                          ? 'bg-amber-500 border-amber-500 text-white'
+                          : 'border-slate-600 text-slate-400 hover:border-amber-400 hover:text-amber-400'
+                      }`}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => { setCropModal(null); setCropBox(null); setCropDragState(null); setCropAspect(null); }}
+                    className="ml-2 text-slate-400 hover:text-white text-[9px] font-bold uppercase tracking-widest transition-colors"
+                  >
+                    ✕ Cancel
+                  </button>
+                </div>
+              </div>
+
+              {/* Canvas crop area */}
+              <div className="flex-1 overflow-hidden flex items-center justify-center bg-neutral-950 p-4 min-h-0">
+                <div
+                  ref={cropContainerRef}
+                  className="relative inline-block select-none cursor-crosshair"
+                  style={{ maxHeight: 'calc(94vh - 152px)', maxWidth: '100%' }}
+                  onMouseDown={handleCropMouseDown}
+                  onMouseMove={handleCropMouseMove}
+                  onMouseUp={handleCropMouseUp}
+                  onMouseLeave={handleCropMouseUp}
+                >
+                  <img
+                    ref={cropImgRef}
+                    src={cropModal.url}
+                    alt=""
+                    draggable={false}
+                    className="pointer-events-none block max-w-full"
+                    style={{ maxHeight: 'calc(94vh - 152px)', userSelect: 'none', display: 'block' }}
+                  />
+
+                  {/* SVG overlay - dark mask + crop rect + handles */}
+                  {hasCrop && cropBox && (
+                    <svg
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'visible' }}
+                    >
+                      {/* Dark overlay everywhere except crop rect (even-odd rule) */}
+                      <path
+                        fillRule="evenodd"
+                        fill="rgba(0,0,0,0.62)"
+                        d={`M-1 -1 H99999 V99999 H-1 Z M${cropBox.x} ${cropBox.y} H${cropBox.x + cropBox.w} V${cropBox.y + cropBox.h} H${cropBox.x} Z`}
+                      />
+
+                      {/* Crop border */}
+                      <rect
+                        x={cropBox.x} y={cropBox.y}
+                        width={cropBox.w} height={cropBox.h}
+                        fill="none" stroke="#F59E0B" strokeWidth="1.5"
+                      />
+
+                      {/* Rule-of-thirds grid */}
+                      {[1/3, 2/3].map((t) => (
+                        <g key={t}>
+                          <line x1={cropBox.x + cropBox.w * t} y1={cropBox.y} x2={cropBox.x + cropBox.w * t} y2={cropBox.y + cropBox.h} stroke="rgba(245,158,11,0.28)" strokeWidth="0.75"/>
+                          <line x1={cropBox.x} y1={cropBox.y + cropBox.h * t} x2={cropBox.x + cropBox.w} y2={cropBox.y + cropBox.h * t} stroke="rgba(245,158,11,0.28)" strokeWidth="0.75"/>
+                        </g>
+                      ))}
+
+                      {/* Corner L-bracket handles */}
+                      {([
+                        [cropBox.x, cropBox.y, 1, 1],
+                        [cropBox.x + cropBox.w, cropBox.y, -1, 1],
+                        [cropBox.x, cropBox.y + cropBox.h, 1, -1],
+                        [cropBox.x + cropBox.w, cropBox.y + cropBox.h, -1, -1],
+                      ] as [number, number, number, number][]).map(([cx, cy, sx, sy], i) => {
+                        const L = 14;
+                        return (
+                          <g key={i}>
+                            <line x1={cx} y1={cy} x2={cx + sx * L} y2={cy} stroke="#F59E0B" strokeWidth="3" strokeLinecap="round"/>
+                            <line x1={cx} y1={cy} x2={cx} y2={cy + sy * L} stroke="#F59E0B" strokeWidth="3" strokeLinecap="round"/>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-700 flex-shrink-0 gap-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setCropBox(null); setCropDragState(null); }}
+                    className="px-4 py-2 text-[9px] font-bold uppercase tracking-widest border border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 rounded transition-all"
+                  >
+                    Reset
+                  </button>
+                  {hasCrop && cropBox && (
+                    <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">
+                      {Math.round(cropBox.w)} × {Math.round(cropBox.h)} px
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleApplyCrop}
+                  disabled={!hasCrop || isApplyingCrop}
+                  className="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                >
+                  {isApplyingCrop ? '⏳ Uploading cropped image...' : '✓ Apply Crop'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {isBannerModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-start py-20 px-4">
           <div className="bg-white w-full max-w-lg p-8 shadow-2xl border border-slate-100 relative">
-            <button 
+            <button
               onClick={() => setIsBannerModalOpen(false)}
               className="absolute top-6 right-6 font-bold text-xs uppercase tracking-widest text-neutral-400 hover:text-neutral-900 transition-colors"
             >
@@ -1630,11 +2169,11 @@ export default function AdminDashboard() {
                   </div>
                   <label className="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:bg-neutral-800 transition-colors cursor-pointer text-center rounded">
                     Select Device File
-                    <input 
-                      type="file" 
-                      accept="image/jpeg, image/png, image/webp" 
-                      onChange={handleBannerImageUpload} 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      accept="image/jpeg, image/png, image/webp"
+                      onChange={handleBannerImageUpload}
+                      className="hidden"
                     />
                   </label>
                 </div>
@@ -1648,7 +2187,7 @@ export default function AdminDashboard() {
                 {bImage && (
                   <div className="relative aspect-[16/9] w-full border border-neutral-200/60 overflow-hidden bg-white rounded shadow-sm">
                     <img src={bImage} className="w-full h-full object-cover" alt="Banner Preview" />
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setBImage('')}
                       className="absolute top-2.5 right-2.5 bg-red-600 text-white text-[9px] font-bold uppercase px-3 py-1.5 shadow hover:bg-red-700 transition-colors rounded"
@@ -1661,8 +2200,8 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Banner Title</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                   placeholder="e.g. Discover Volahi Couture"
                   value={bTitle}
@@ -1672,8 +2211,8 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Banner Subtitle (Promotional Tag)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                   placeholder="e.g. NEW SEASON ARRIVAL"
                   value={bSubtitle}
@@ -1684,8 +2223,8 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">CTA Button Text</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="Discover Collection"
                     value={bCtaText}
@@ -1694,8 +2233,8 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">CTA Redirect URL Link</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
                     placeholder="/products"
                     value={bCtaLink}
@@ -1705,15 +2244,15 @@ export default function AdminDashboard() {
               </div>
 
               <div className="border-t pt-6 flex justify-end gap-3">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setIsBannerModalOpen(false)}
                   className="px-5 py-2.5 border rounded text-xs font-bold uppercase tracking-wider hover:bg-slate-50"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="px-5 py-2.5 bg-primary text-white rounded text-xs font-bold uppercase tracking-wider hover:bg-neutral-800"
                 >
                   Create Banner
@@ -1739,7 +2278,7 @@ export default function AdminDashboard() {
                   <h3 className="text-2xl font-heading uppercase tracking-tighter">{customer?.customerName || 'Client'}</h3>
                   <p className="text-neutral-400 text-xs mt-1 tracking-wider">{selectedCustomerEmail}</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedCustomerEmail(null)}
                   className="text-neutral-400 hover:text-white transition-colors mt-1"
                 >
@@ -1787,13 +2326,12 @@ export default function AdminDashboard() {
                           <span className="text-[9px] text-neutral-400 font-semibold">{order.date}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm ${
-                            order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                            order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
-                            order.status === 'Processing' || order.status === 'Approved' ? 'bg-amber-100 text-amber-700' :
-                            order.status === 'Cancelled' || order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-slate-100 text-slate-600'
-                          }`}>{order.status}</span>
+                          <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm ${order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                              order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
+                                order.status === 'Processing' || order.status === 'Approved' ? 'bg-amber-100 text-amber-700' :
+                                  order.status === 'Cancelled' || order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                    'bg-slate-100 text-slate-600'
+                            }`}>{order.status}</span>
                           <span className="text-xs font-bold text-slate-800">₹{order.total.toLocaleString('en-IN')}</span>
                         </div>
                       </div>
