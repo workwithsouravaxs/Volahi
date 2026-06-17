@@ -93,21 +93,10 @@ function ProductDetailsContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[45%_55%] gap-12 xl:gap-16 mb-24">
         {/* Visual Gallery */}
-        <div className="space-y-6">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="w-full h-[384px] max-h-[384px] flex items-center justify-center bg-white border border-[#E8DED3] rounded-lg shadow-sm overflow-hidden"
-          >
-            <img 
-              src={product.images[activeImage] || product.image} 
-              className="max-h-[384px] w-auto max-w-full object-contain object-center"
-              alt={product.name}
-            />
-          </motion.div>
-          
+        <div className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[520px] lg:h-[600px] w-full">
+          {/* Thumbnail Rail */}
           {product.images.length > 1 && (
-            <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar touch-pan-x">
+            <div className="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto no-scrollbar touch-pan-x md:touch-pan-y w-full md:w-24 flex-shrink-0 h-auto md:h-full pb-2 md:pb-0">
               {product.images.map((img, i) => (
                 <div 
                   key={i}
@@ -123,6 +112,19 @@ function ProductDetailsContent() {
               ))}
             </div>
           )}
+          
+          {/* Main Image Container */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex-1 w-full h-[360px] md:h-full flex items-center justify-center bg-white border border-[#E8DED3] rounded-lg shadow-sm p-4 md:p-5 overflow-hidden"
+          >
+            <img 
+              src={product.images[activeImage] || product.image} 
+              className="max-w-[90%] max-h-[90%] w-auto h-auto object-contain object-center"
+              alt={product.name}
+            />
+          </motion.div>
         </div>
 
         {/* Product Specifications & Purchases */}
