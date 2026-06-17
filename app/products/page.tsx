@@ -275,14 +275,14 @@ function ProductCatalogContent() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   key={product.id}
-                  className="group relative border border-neutral-100/50 bg-white p-4 shadow-sm transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_12px_30px_rgba(210,140,129,0.15)] rounded"
+                  className="group relative border border-[#E8DED3] bg-white p-4 shadow-[0_6px_18px_rgba(0,0,0,0.05)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary hover:shadow-[0_12px_24px_rgba(30,13,14,0.08)] rounded-[5px]"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6">
-                    <Link href={`/products/detail?id=${product.id}`} className="block w-full h-full overflow-hidden">
+                  <div className="relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-t-[5px]">
+                    <Link href={`/products/detail?id=${product.id}`} className="block w-full h-full overflow-hidden rounded-t-[5px]">
                       <img 
                         src={product.image} 
                         alt={product.name}
-                        className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5]"
+                        className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5] rounded-t-[5px]"
                         style={{ objectPosition: product.imagePosition?.[0] ?? 'center 50%' }}
                       />
                     </Link>
@@ -348,7 +348,7 @@ function ProductCatalogContent() {
 
 export default function ProductCatalog() {
   return (
-    <main className="min-h-screen bg-[#FFF9F7]">
+    <main className="min-h-screen bg-background">
       <Navbar />
       <Suspense fallback={<div className="pt-40 text-center font-heading text-3xl uppercase tracking-widest animate-pulse">Entering Volahi Collection...</div>}>
         <ProductCatalogContent />

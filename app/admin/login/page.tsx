@@ -55,7 +55,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <main className="min-h-screen bg-[#FFF9F7] flex items-center justify-center p-6 relative overflow-hidden">
+    <main className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
       {/* Editorial Decorative Background */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-neutral-200 via-primary to-neutral-200" />
       <div className="absolute top-10 left-10 text-[10px] font-bold uppercase tracking-[0.4em] text-neutral-300">

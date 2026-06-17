@@ -6,6 +6,7 @@ import { useVolahiStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Star, ShoppingCart, Zap, Heart, Sparkles, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 
 export default function Home() {
   const { products, banners, middleBanner, toggleWishlist, wishlist, addToCart, socialLinks } = useVolahiStore();
@@ -48,7 +49,7 @@ export default function Home() {
   const availableCategories = Array.from(new Set(activeProducts.map(p => p.category)));
 
   return (
-    <main className="relative overflow-hidden bg-[#FFF9F7] font-body text-primary">
+    <main className="relative overflow-hidden bg-background font-body text-primary">
       <Navbar />
       
       {/* ==================== SECTION 1: HERO DYNAMIC BANNERS ==================== */}
@@ -173,7 +174,7 @@ export default function Home() {
 
           {/* ==================== CATEGORY PROMOTIONAL MAIN BANNER ==================== */}
           {middleBanner && (
-            <section className="w-full h-auto bg-[#FFF9F7] overflow-hidden border-b border-neutral-100/50">
+            <section className="w-full h-auto bg-background overflow-hidden border-b border-neutral-100/50">
               <Link href={middleBanner.ctaLink || '/products'} className="block w-full h-auto">
                 <img 
                   src={middleBanner.image} 
@@ -186,7 +187,7 @@ export default function Home() {
 
           {/* ==================== SECTION 2: FEATURED COUTURE ==================== */}
           {featuredProducts.length > 0 && (
-            <section className="py-24 bg-[#FFF9F7]">
+            <section className="py-24 bg-background">
               <div className="max-w-7xl mx-auto px-4">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pl-6 border-l-2 border-primary">
                   <div>
@@ -202,13 +203,13 @@ export default function Home() {
                   {featuredProducts.map((p) => (
                     <div 
                       key={p.id}
-                      className="group border border-neutral-100/50 bg-white p-4 shadow-sm relative transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_12px_30px_rgba(210,140,129,0.15)]"
+                      className="group border border-[#E8DED3] bg-white p-4 shadow-[0_6px_18px_rgba(0,0,0,0.05)] relative transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary hover:shadow-[0_12px_24px_rgba(30,13,14,0.08)] rounded-[5px]"
                     >
-                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6">
+                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-t-[5px]">
                         <img 
                           src={p.image} 
                           alt={p.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-t-[5px]"
                         />
                         {/* Size Hover Overlay */}
                         <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-neutral-100 flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none">
@@ -272,13 +273,13 @@ export default function Home() {
                   {bestSellers.map((p) => (
                     <div 
                       key={p.id}
-                      className="group border border-neutral-100/50 bg-[#FFF9F7] p-4 shadow-sm relative transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_12px_30px_rgba(210,140,129,0.15)]"
+                      className="group border border-[#E8DED3] bg-white p-4 shadow-[0_6px_18px_rgba(0,0,0,0.05)] relative transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary hover:shadow-[0_12px_24px_rgba(30,13,14,0.08)] rounded-[5px]"
                     >
-                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6">
+                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-t-[5px]">
                         <img 
                           src={p.image} 
                           alt={p.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-t-[5px]"
                         />
                         {/* Size Hover Overlay */}
                         <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-neutral-100 flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none">
@@ -326,7 +327,7 @@ export default function Home() {
 
           {/* ==================== SECTION 4: NEW ARRIVALS ==================== */}
           {newArrivals.length > 0 && (
-            <section className="py-24 bg-[#FFF9F7] border-t border-neutral-100">
+            <section className="py-24 bg-background border-t border-neutral-100">
               <div className="max-w-7xl mx-auto px-4">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pl-6 border-l-2 border-primary">
                   <div>
@@ -342,13 +343,13 @@ export default function Home() {
                   {newArrivals.map((p) => (
                     <div 
                       key={p.id}
-                      className="group border border-neutral-100/50 bg-white p-4 shadow-sm relative transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_12px_30px_rgba(210,140,129,0.15)]"
+                      className="group border border-[#E8DED3] bg-white p-4 shadow-[0_6px_18px_rgba(0,0,0,0.05)] relative transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary hover:shadow-[0_12px_24px_rgba(30,13,14,0.08)] rounded-[5px]"
                     >
-                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6">
+                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-t-[5px]">
                         <img 
                           src={p.image} 
                           alt={p.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-t-[5px]"
                         />
                         {/* Size Hover Overlay */}
                         <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-neutral-100 flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none">
@@ -400,7 +401,7 @@ export default function Home() {
       <footer className="bg-neutral-900 text-white py-20 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-1 space-y-6">
-            <h2 className="text-3xl font-heading font-bold tracking-tighter uppercase">Volahi</h2>
+            <Logo variant="light" iconClassName="h-9 w-9" wordmarkClassName="h-5 w-auto" />
             <p className="text-neutral-400 text-xs leading-[2] tracking-widest">
               Empowering dynamic lifestyle couture through dynamic, elegant, custom design structures.
             </p>

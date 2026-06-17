@@ -118,6 +118,9 @@ export default function AdminDashboard() {
   const [pFeatured, setPFeatured] = useState(false);
   const [pBestSeller, setPBestSeller] = useState(false);
   const [pNewArrival, setPNewArrival] = useState(false);
+  const [pDeliveryFeeEnabled, setPDeliveryFeeEnabled] = useState(false);
+  const [pDeliveryFeeAmount, setPDeliveryFeeAmount] = useState(0);
+  const [pDeliveryFeeNotes, setPDeliveryFeeNotes] = useState('');
 
   // Banner Form State
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
@@ -405,6 +408,9 @@ export default function AdminDashboard() {
     setPFeatured(p.featured);
     setPBestSeller(p.bestSeller);
     setPNewArrival(p.newArrival);
+    setPDeliveryFeeEnabled(p.deliveryFeeEnabled ?? false);
+    setPDeliveryFeeAmount(p.deliveryFeeAmount ?? 0);
+    setPDeliveryFeeNotes(p.deliveryFeeNotes || '');
     setIsProductModalOpen(true);
   };
 
@@ -437,6 +443,9 @@ export default function AdminDashboard() {
     setPFeatured(false);
     setPBestSeller(false);
     setPNewArrival(false);
+    setPDeliveryFeeEnabled(false);
+    setPDeliveryFeeAmount(0);
+    setPDeliveryFeeNotes('');
   };
 
   const handleProductSubmit = (e: React.FormEvent) => {
@@ -476,6 +485,9 @@ export default function AdminDashboard() {
       featured: pFeatured,
       bestSeller: pBestSeller,
       newArrival: pNewArrival,
+      deliveryFeeEnabled: pDeliveryFeeEnabled,
+      deliveryFeeAmount: Number(pDeliveryFeeAmount) || 0,
+      deliveryFeeNotes: pDeliveryFeeNotes,
     };
 
     if (editingProduct) {
@@ -1780,6 +1792,54 @@ export default function AdminDashboard() {
                     onChange={(e) => setPReturn(e.target.value)}
                   />
                 </div>
+              </div>
+
+              {/* Product Delivery Fee Settings (Admin Panel) */}
+              <div className="border p-4 bg-slate-50/50 rounded space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700 block font-heading">Product Delivery Charge Configuration</span>
+                    <span className="text-[8px] text-neutral-400 uppercase tracking-wider mt-0.5">Toggle delivery fee ON/OFF for this product</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pDeliveryFeeEnabled}
+                      onChange={(e) => setPDeliveryFeeEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    <span className="ml-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                      {pDeliveryFeeEnabled ? 'ON (Charged)' : 'OFF (Free)'}
+                    </span>
+                  </label>
+                </div>
+
+                {pDeliveryFeeEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 animate-fadeIn">
+                    <div>
+                      <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Delivery Fee Amount (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full bg-white border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
+                        placeholder="e.g. 150"
+                        value={pDeliveryFeeAmount || ''}
+                        onChange={(e) => setPDeliveryFeeAmount(Number(e.target.value))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Delivery Fee Notes (optional)</label>
+                      <input
+                        type="text"
+                        className="w-full bg-white border border-slate-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary"
+                        placeholder="e.g. Standard Courier Charge"
+                        value={pDeliveryFeeNotes}
+                        onChange={(e) => setPDeliveryFeeNotes(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="border-t pt-6 flex justify-end gap-4">

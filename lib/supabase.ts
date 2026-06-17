@@ -141,6 +141,9 @@ const mapToProduct = (dbRow: any): Product => ({
   featured: !!dbRow.featured,
   bestSeller: !!dbRow.best_seller,
   newArrival: !!dbRow.new_arrival,
+  deliveryFeeEnabled: dbRow.delivery_fee_enabled !== undefined ? !!dbRow.delivery_fee_enabled : false,
+  deliveryFeeAmount: dbRow.delivery_fee_amount !== undefined && dbRow.delivery_fee_amount !== null ? Number(dbRow.delivery_fee_amount) : 0,
+  deliveryFeeNotes: dbRow.delivery_fee_notes || '',
 });
 
 const mapToDbProduct = (p: Omit<Product, 'reviews'>) => ({
@@ -170,6 +173,9 @@ const mapToDbProduct = (p: Omit<Product, 'reviews'>) => ({
   featured: !!p.featured,
   best_seller: !!p.bestSeller,
   new_arrival: !!p.newArrival,
+  delivery_fee_enabled: p.deliveryFeeEnabled ?? false,
+  delivery_fee_amount: p.deliveryFeeAmount ?? 0,
+  delivery_fee_notes: p.deliveryFeeNotes || '',
 });
 
 // Banner Serialization Helpers

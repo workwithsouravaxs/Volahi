@@ -19,7 +19,7 @@ export default function CustomerProfile() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-[#FFF9F7] flex items-center justify-center font-body">
+      <div className="min-h-screen bg-background flex items-center justify-center font-body">
         <p className="font-heading text-lg tracking-widest animate-pulse">Securing Client Authorization...</p>
       </div>
     );
@@ -29,7 +29,7 @@ export default function CustomerProfile() {
   const clientOrders = orders.filter(o => o.customerEmail.toLowerCase() === currentUser.email.toLowerCase());
 
   return (
-    <main className="min-h-screen bg-[#FFF9F7] font-body text-primary">
+    <main className="min-h-screen bg-background font-body text-primary">
       <Navbar />
 
       <div className="pt-40 pb-32 max-w-7xl mx-auto px-4">
@@ -179,7 +179,7 @@ export default function CustomerProfile() {
                     )}
 
                     {order.status === 'Shipped' && order.trackingUrl && (
-                      <div className="bg-[#FFF9F7] p-5 border border-neutral-100 rounded flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+                      <div className="bg-secondary p-5 border border-neutral-100 rounded flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
                         <div className="text-center sm:text-left">
                           <span className="block text-[8px] text-cta font-bold uppercase tracking-[0.2em]">Active Dispatch Courier Link</span>
                           <span className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Insured tracking index allocated</span>

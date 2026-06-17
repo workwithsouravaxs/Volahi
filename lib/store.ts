@@ -47,6 +47,9 @@ export interface Product {
   featured: boolean;
   bestSeller: boolean;
   newArrival: boolean;
+  deliveryFeeEnabled?: boolean;
+  deliveryFeeAmount?: number;
+  deliveryFeeNotes?: string;
   reviews?: {
     reviewerName: string;
     rating: number;

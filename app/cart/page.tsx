@@ -11,16 +11,21 @@ export default function CartPage() {
   const { cart, updateCartQuantity, removeFromCart } = useVolahiStore();
 
   const subtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
-  const shipping = subtotal > 15000 ? 0 : 499;
+  const shipping = cart.reduce((acc, item) => {
+    if (item.product.deliveryFeeEnabled) {
+      return acc + (Number(item.product.deliveryFeeAmount) || 0) * item.quantity;
+    }
+    return acc;
+  }, 0);
   const tax = subtotal * 0.12;
   const total = subtotal + shipping + tax;
 
   return (
-    <main className="min-h-screen bg-[#FFF9F7] font-body text-primary">
+    <main className="min-h-screen bg-background font-body text-primary">
       <Navbar />
       
       <div className="pt-40 pb-32 max-w-7xl mx-auto px-4">
-        <h1 className="text-4xl font-heading mb-12 uppercase tracking-tighter">Shopping Bag</h1>
+        <h1 className="text-4xl font-heading mb-12 uppercase tracking-tighter">Shopping Cart</h1>
 
         {cart.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
@@ -99,7 +104,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-neutral-400">
                     <span>Atelier Delivery</span>
-                    <span className="text-slate-800">{shipping === 0 ? 'COMPLIMENTARY' : `₹${shipping}`}</span>
+                    <span className="text-slate-800">{shipping === 0 ? 'FREE DELIVERY' : `₹${shipping.toLocaleString()}`}</span>
                   </div>
                   <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-neutral-400">
                     <span>Tax (GST 12%)</span>
@@ -112,7 +117,7 @@ export default function CartPage() {
                 </div>
 
                 <Link href="/checkout" className="w-full btn-primary py-4.5 bg-primary text-white font-bold text-xs uppercase tracking-widest hover:bg-neutral-800 transition-all flex items-center justify-center gap-2 rounded">
-                  Acquire Order <ArrowRight className="w-4 h-4" />
+                  Proceed to Checkout <ArrowRight className="w-4 h-4" />
                 </Link>
 
                 <div className="flex items-center justify-center gap-2 text-[9px] text-neutral-400 font-bold uppercase tracking-widest">
@@ -126,8 +131,8 @@ export default function CartPage() {
             <div className="bg-white border w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-sm">
               <ShoppingBag className="w-8 h-8 text-neutral-300" />
             </div>
-            <h2 className="text-3xl font-heading uppercase tracking-tighter">Your bag is empty</h2>
-            <p className="text-neutral-400 text-xs tracking-widest leading-[1.8]">Looks like you haven't allocated any couture creations to your shopping bag yet.</p>
+            <h2 className="text-3xl font-heading uppercase tracking-tighter">Your cart is empty</h2>
+            <p className="text-neutral-400 text-xs tracking-widest leading-[1.8]">Looks like you haven't allocated any couture creations to your shopping cart yet.</p>
             <div className="pt-4">
               <Link href="/products" className="btn-primary py-4 px-10 text-[9px] font-bold tracking-widest uppercase">Start Exploring</Link>
             </div>

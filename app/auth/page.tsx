@@ -6,6 +6,7 @@ import { useVolahiStore } from '@/lib/store';
 import Navbar from '@/components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Heart, Phone } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 function CustomerAuthContent() {
   const router = useRouter();
@@ -116,7 +117,7 @@ function CustomerAuthContent() {
   };
 
   return (
-    <main className="min-h-screen bg-[#FFF9F7] relative overflow-hidden flex flex-col justify-center">
+    <main className="min-h-screen bg-background relative overflow-hidden flex flex-col justify-center">
       <Navbar />
 
       <div className="pt-32 pb-20 px-4 max-w-7xl mx-auto w-full flex items-center justify-center">
@@ -133,7 +134,7 @@ function CustomerAuthContent() {
             </div>
             
             <div className="relative z-10">
-              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-neutral-300">Volahi Couture</span>
+              <Logo variant="light" iconClassName="h-8 w-8" wordmarkClassName="h-4.5 w-auto" />
             </div>
 
             <div className="relative z-10 max-w-sm">
@@ -413,7 +414,7 @@ function CustomerAuthContent() {
 export default function CustomerAuth() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#FFF9F7] flex items-center justify-center font-body text-primary">
+      <div className="min-h-screen bg-background flex items-center justify-center font-body text-primary">
         <div className="text-center font-heading text-xl uppercase tracking-widest animate-pulse">
           Loading Authorization...
         </div>

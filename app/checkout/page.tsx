@@ -24,7 +24,7 @@ export default function CheckoutPage() {
 
   if (!currentUser) {
     return (
-      <main className="min-h-screen bg-[#FFF9F7] flex items-center justify-center font-body text-primary p-6">
+      <main className="min-h-screen bg-background flex items-center justify-center font-body text-primary p-6">
         <Navbar />
         <div className="w-full max-w-xl bg-white border border-neutral-100 p-12 text-center shadow-xl space-y-8 rounded">
           <ShieldCheck className="w-16 h-16 text-cta mx-auto" />
@@ -51,7 +51,12 @@ export default function CheckoutPage() {
   }
 
   const subtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
-  const shipping = subtotal > 15000 ? 0 : 499;
+  const shipping = cart.reduce((acc, item) => {
+    if (item.product.deliveryFeeEnabled) {
+      return acc + (Number(item.product.deliveryFeeAmount) || 0) * item.quantity;
+    }
+    return acc;
+  }, 0);
   const tax = subtotal * 0.12;
   const total = subtotal + shipping + tax;
 
@@ -86,7 +91,7 @@ export default function CheckoutPage() {
 
   if (isSuccess) {
     return (
-      <main className="min-h-screen bg-[#FFF9F7] flex items-center justify-center font-body text-primary p-6">
+      <main className="min-h-screen bg-background flex items-center justify-center font-body text-primary p-6">
         <div className="w-full max-w-xl bg-white border border-neutral-100 p-12 text-center shadow-xl space-y-8 rounded">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto animate-bounce" />
           
@@ -98,7 +103,7 @@ export default function CheckoutPage() {
             </p>
           </div>
 
-          <div className="bg-[#FFF9F7] border p-6 rounded space-y-2">
+          <div className="bg-secondary border p-6 rounded space-y-2">
             <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-widest block">Authorized Couture ID</span>
             <span className="text-xl font-bold tracking-[0.2em] uppercase text-primary block">{generatedId}</span>
           </div>
@@ -121,7 +126,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFF9F7] font-body text-primary">
+    <main className="min-h-screen bg-background font-body text-primary">
       <Navbar />
 
       <div className="pt-40 pb-32 max-w-7xl mx-auto px-4">
@@ -222,9 +227,9 @@ export default function CheckoutPage() {
               {/* Payment Section - Elegant Mock */}
               <div className="space-y-6 pt-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-slate-50 pb-3">3. Payment Allocation</h3>
-                <div className="p-4 border border-neutral-100 rounded bg-[#FFF9F7] flex justify-between items-center">
+                <div className="p-4 border border-neutral-100 rounded bg-secondary flex justify-between items-center">
                   <div>
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-800">Cash On Luxury Delivery</span>
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-800">Cash on Delivery</span>
                     <span className="block text-[8px] text-neutral-400 uppercase tracking-widest mt-0.5">Settle with courier at doorstep</span>
                   </div>
                   <ShieldCheck className="w-6 h-6 text-cta" />
@@ -236,7 +241,7 @@ export default function CheckoutPage() {
             {/* Sticky Order Summaries half */}
             <div className="lg:col-span-5">
               <div className="bg-white border border-neutral-100 p-8 sm:p-12 shadow-sm rounded sticky top-36 space-y-8">
-                <h3 className="font-heading text-2xl uppercase tracking-tighter pb-4 border-b border-slate-50">Couture Allocations</h3>
+                <h3 className="font-heading text-2xl uppercase tracking-tighter pb-4 border-b border-slate-50">Order Summary</h3>
                 
                 {/* List items */}
                 <div className="max-h-64 overflow-y-auto space-y-4 pr-2">
@@ -262,7 +267,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-neutral-400">
                     <span>Atelier Delivery</span>
-                    <span className="text-slate-800">{shipping === 0 ? 'COMPLIMENTARY' : `₹${shipping}`}</span>
+                    <span className="text-slate-800">{shipping === 0 ? 'FREE DELIVERY' : `₹${shipping.toLocaleString()}`}</span>
                   </div>
                   <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-neutral-400">
                     <span>Tax (GST 12%)</span>
@@ -292,8 +297,8 @@ export default function CheckoutPage() {
           </form>
         ) : (
           <div className="py-20 border border-dashed border-neutral-200 text-center rounded bg-white max-w-md mx-auto space-y-6">
-            <h3 className="text-xl font-heading mb-2 uppercase tracking-widest">Awaiting Bag Allocations</h3>
-            <p className="text-neutral-400 text-xs tracking-wider mb-8">You cannot checkout without items inside your Shopping Bag.</p>
+            <h3 className="text-xl font-heading mb-2 uppercase tracking-widest">Awaiting Cart Allocations</h3>
+            <p className="text-neutral-400 text-xs tracking-wider mb-8">You cannot checkout without items inside your Shopping Cart.</p>
             <Link href="/products" className="btn-primary inline-block">Begin Exploration</Link>
           </div>
         )}
