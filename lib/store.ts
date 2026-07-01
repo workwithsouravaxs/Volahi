@@ -207,12 +207,12 @@ export const useVolahiStore = create<VolahiStore>()(
           const { banners: dbBanners, middleBanner: dbMiddleBanner } = await getDbBanners();
           const dbOrders = await fetchDbOrders();
 
-          set((state) => ({
-            products: dbProducts.length > 0 ? dbProducts : state.products,
-            banners: dbBanners.length > 0 ? dbBanners : state.banners,
-            middleBanner: dbMiddleBanner || state.middleBanner,
-            orders: dbOrders.length > 0 ? dbOrders : state.orders,
-          }));
+          set({
+            products: dbProducts,
+            banners: dbBanners,
+            middleBanner: dbMiddleBanner,
+            orders: dbOrders,
+          });
         } catch (err) {
           console.warn('[Zustand Store] Failed to sync with Supabase global database:', err);
         }

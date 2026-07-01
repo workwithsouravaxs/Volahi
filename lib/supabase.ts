@@ -202,22 +202,16 @@ const mapToDbBanner = (b: Banner, isMiddle = false) => ({
 
 // Products DB Operations
 export async function getDbProducts(): Promise<Product[]> {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (error) {
-      console.warn('[Supabase DB] Error fetching products, fallback active:', error.message);
-      return [];
-    }
-
-    return (data || []).map(mapToProduct);
-  } catch (err) {
-    console.warn('[Supabase DB] Exception fetching products, fallback active:', err);
-    return [];
+  if (error) {
+    throw new Error(`[Supabase DB] Error fetching products: ${error.message}`);
   }
+
+  return (data || []).map(mapToProduct);
 }
 
 export async function addDbProduct(p: Omit<Product, 'reviews'>): Promise<boolean> {
@@ -306,26 +300,20 @@ export async function deleteDbProduct(id: string): Promise<boolean> {
 
 // Banners DB Operations
 export async function getDbBanners(): Promise<{ banners: Banner[]; middleBanner: Banner | null }> {
-  try {
-    const { data, error } = await supabase
-      .from('banners')
-      .select('*');
+  const { data, error } = await supabase
+    .from('banners')
+    .select('*');
 
-    if (error) {
-      console.warn('[Supabase DB] Error fetching banners, fallback active:', error.message);
-      return { banners: [], middleBanner: null };
-    }
-
-    const rows = data || [];
-    const banners = rows.filter((r: any) => !r.is_middle).map(mapToBanner);
-    const middleRow = rows.find((r: any) => r.is_middle);
-    const middleBanner = middleRow ? mapToBanner(middleRow) : null;
-
-    return { banners, middleBanner };
-  } catch (err) {
-    console.warn('[Supabase DB] Exception fetching banners, fallback active:', err);
-    return { banners: [], middleBanner: null };
+  if (error) {
+    throw new Error(`[Supabase DB] Error fetching banners: ${error.message}`);
   }
+
+  const rows = data || [];
+  const banners = rows.filter((r: any) => !r.is_middle).map(mapToBanner);
+  const middleRow = rows.find((r: any) => r.is_middle);
+  const middleBanner = middleRow ? mapToBanner(middleRow) : null;
+
+  return { banners, middleBanner };
 }
 
 export async function addDbBanner(b: Banner): Promise<boolean> {
@@ -455,22 +443,16 @@ const mapToDbOrder = (o: Order) => ({
 
 // Orders DB Operations
 export async function fetchDbOrders(): Promise<Order[]> {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (error) {
-      console.warn('[Supabase DB] Error fetching orders, fallback active:', error.message);
-      return [];
-    }
-
-    return (data || []).map(mapToOrder);
-  } catch (err) {
-    console.warn('[Supabase DB] Exception fetching orders, fallback active:', err);
-    return [];
+  if (error) {
+    throw new Error(`[Supabase DB] Error fetching orders: ${error.message}`);
   }
+
+  return (data || []).map(mapToOrder);
 }
 
 export async function addDbOrder(o: Order): Promise<boolean> {
