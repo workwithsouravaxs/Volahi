@@ -509,7 +509,13 @@ function ProductDetailsContent() {
                     style={{ objectPosition: p.imagePosition?.[0] ?? 'center 50%' }}
                     alt={p.name} 
                   />
-                  {/* Size Hover Overlay */}
+                   {/* Glassmorphic transparent "NEW" label */}
+                   {(p.newArrival || p.discountPrice) && (
+                     <div className="absolute top-3 left-3 z-10 bg-white/25 backdrop-blur-md border border-white/40 text-[#1C1C1C] text-[8px] font-bold px-2.5 py-1 uppercase tracking-[0.2em] pointer-events-none select-none">
+                       NEW
+                     </div>
+                   )}
+                   {/* Size Hover Overlay */}
                   <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-[#E4DFDE] flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none rounded-none">
                     <span className="text-[7px] font-bold tracking-[0.18em] text-neutral-400 uppercase mr-1">Sizes:</span>
                     {p.sizes.map((s: string) => (
