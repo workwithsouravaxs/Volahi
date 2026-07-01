@@ -228,8 +228,22 @@ export async function addDbProduct(p: Omit<Product, 'reviews'>): Promise<boolean
       .insert([dbRow]);
 
     if (error) {
-      console.error('[Supabase DB] Failed to insert product:', error.message);
-      return false;
+      console.warn('[Supabase DB] Failed to insert product. Attempting fallback mapping...', error.message);
+      const fallbackRow = { ...dbRow };
+      delete (fallbackRow as any).delivery_fee_enabled;
+      delete (fallbackRow as any).delivery_fee_amount;
+      delete (fallbackRow as any).delivery_fee_notes;
+      delete (fallbackRow as any).image_position;
+
+      const { error: retryError } = await supabase
+        .from('products')
+        .insert([fallbackRow]);
+
+      if (retryError) {
+        console.error('[Supabase DB] Fallback insert failed:', retryError.message);
+        return false;
+      }
+      console.log('[Supabase DB] Insert succeeded via schema fallback.');
     }
     return true;
   } catch (err) {
@@ -247,8 +261,23 @@ export async function editDbProduct(p: Product): Promise<boolean> {
       .eq('id', p.id);
 
     if (error) {
-      console.error('[Supabase DB] Failed to update product:', error.message);
-      return false;
+      console.warn('[Supabase DB] Failed to update product. Attempting fallback mapping...', error.message);
+      const fallbackRow = { ...dbRow };
+      delete (fallbackRow as any).delivery_fee_enabled;
+      delete (fallbackRow as any).delivery_fee_amount;
+      delete (fallbackRow as any).delivery_fee_notes;
+      delete (fallbackRow as any).image_position;
+
+      const { error: retryError } = await supabase
+        .from('products')
+        .update(fallbackRow)
+        .eq('id', p.id);
+
+      if (retryError) {
+        console.error('[Supabase DB] Fallback update failed:', retryError.message);
+        return false;
+      }
+      console.log('[Supabase DB] Update succeeded via schema fallback.');
     }
     return true;
   } catch (err) {
