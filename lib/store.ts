@@ -200,21 +200,29 @@ export const useVolahiStore = create<VolahiStore>()(
         pinterest: '',
       },
 
-      // Asynchronous Global DB Synchronization
       fetchStoreData: async () => {
+        // 1. Sync Products
         try {
           const dbProducts = await getDbProducts();
-          const { banners: dbBanners, middleBanner: dbMiddleBanner } = await getDbBanners();
-          const dbOrders = await fetchDbOrders();
-
-          set({
-            products: dbProducts,
-            banners: dbBanners,
-            middleBanner: dbMiddleBanner,
-            orders: dbOrders,
-          });
+          set({ products: dbProducts });
         } catch (err) {
-          console.warn('[Zustand Store] Failed to sync with Supabase global database:', err);
+          console.warn('[Zustand Store] Failed to sync products with Supabase:', err);
+        }
+
+        // 2. Sync Banners
+        try {
+          const { banners: dbBanners, middleBanner: dbMiddleBanner } = await getDbBanners();
+          set({ banners: dbBanners, middleBanner: dbMiddleBanner });
+        } catch (err) {
+          console.warn('[Zustand Store] Failed to sync banners with Supabase:', err);
+        }
+
+        // 3. Sync Orders
+        try {
+          const dbOrders = await fetchDbOrders();
+          set({ orders: dbOrders });
+        } catch (err) {
+          console.warn('[Zustand Store] Failed to sync orders with Supabase:', err);
         }
       },
 
