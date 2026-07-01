@@ -39,9 +39,9 @@ export default function CartPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="bg-white p-6 rounded-none border border-[#E4DFDE] flex gap-6 hover:border-primary transition-colors"
+                    className="bg-white p-4 md:p-6 rounded-none border border-[#E4DFDE] flex gap-4 md:gap-6 hover:border-primary transition-colors"
                   >
-                    <div className="w-24 h-32 rounded-none bg-neutral-50 overflow-hidden border border-[#E4DFDE] flex-shrink-0">
+                    <div className="w-20 h-28 md:w-24 md:h-32 rounded-none bg-neutral-50 overflow-hidden border border-[#E4DFDE] flex-shrink-0">
                       <img src={item.product.image} className="w-full h-full object-cover" alt={item.product.name} />
                     </div>
                     
@@ -49,12 +49,12 @@ export default function CartPage() {
                       <div className="flex justify-between">
                         <div>
                           <span className="text-[8px] text-primary font-bold uppercase tracking-[0.18em]">{item.product.category}</span>
-                          <h3 className="font-heading text-lg mt-1 mb-2 uppercase tracking-[0.18em]">{item.product.name}</h3>
-                          <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest font-body">
+                          <h3 className="font-heading text-sm md:text-lg mt-1 mb-1.5 uppercase tracking-[0.18em]">{item.product.name}</h3>
+                          <p className="text-[9px] md:text-[10px] text-neutral-400 font-bold uppercase tracking-widest font-body">
                             Allocation: {getSizeWithNumber(item.selectedSize)} / {item.selectedColor}
                           </p>
                         </div>
-                        <p className="font-semibold text-accent">₹{(item.product.price * item.quantity).toLocaleString()}</p>
+                        <p className="text-sm md:text-base font-semibold text-accent">₹{(item.product.price * item.quantity).toLocaleString()}</p>
                       </div>
 
                       <div className="flex items-center justify-between">

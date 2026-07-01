@@ -162,7 +162,7 @@ export default function Home() {
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 grayscale-[0.1] aspect-[4/5]"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/60 via-transparent to-transparent flex items-end p-6 md:p-8">
-                          <h3 className="text-white text-xl md:text-2xl font-heading uppercase tracking-[0.18em]">{cat}</h3>
+                          <h3 className="text-white text-base md:text-xl lg:text-2xl font-heading uppercase tracking-[0.18em]">{cat}</h3>
                         </div>
                       </Link>
                     );
@@ -192,7 +192,7 @@ export default function Home() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pl-6 border-l-2 border-primary">
                   <div>
                     <span className="text-[10px] text-primary font-bold uppercase tracking-[0.18em] mb-2">Featured Selection</span>
-                    <h2 className="text-3xl md:text-4xl font-heading uppercase tracking-[0.18em]">The Couture Collection</h2>
+                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading uppercase tracking-[0.18em]">The Couture Collection</h2>
                   </div>
                   <Link href="/products" className="text-[10px] uppercase tracking-[0.18em] font-bold border-b border-primary pb-1 hover:text-accent hover:border-accent transition-all mt-4 md:mt-0">
                     Explore all creations
@@ -262,7 +262,7 @@ export default function Home() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pl-6 border-l-2 border-primary">
                   <div>
                     <span className="text-[10px] text-primary font-bold uppercase tracking-[0.18em] mb-2"><Zap className="w-3.5 h-3.5 fill-primary inline mr-1" /> Now Trending</span>
-                    <h2 className="text-3xl md:text-4xl font-heading uppercase tracking-[0.18em]">The Hot List</h2>
+                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading uppercase tracking-[0.18em]">The Hot List</h2>
                   </div>
                   <Link href="/products" className="text-[10px] uppercase tracking-[0.18em] font-bold border-b border-primary pb-1 hover:text-accent hover:border-accent transition-all mt-4 md:mt-0">
                     Explore all bestsellers
@@ -332,7 +332,7 @@ export default function Home() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pl-6 border-l-2 border-primary">
                   <div>
                     <span className="text-[10px] text-primary font-bold uppercase tracking-[0.18em] mb-2">New Season arrivals</span>
-                    <h2 className="text-3xl md:text-4xl font-heading uppercase tracking-[0.18em]">Fresh Additions</h2>
+                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading uppercase tracking-[0.18em]">Fresh Additions</h2>
                   </div>
                   <Link href="/products" className="text-[10px] uppercase tracking-[0.18em] font-bold border-b border-primary pb-1 hover:text-accent hover:border-accent transition-all mt-4 md:mt-0">
                     Explore all additions

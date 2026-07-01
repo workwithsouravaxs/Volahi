@@ -130,7 +130,7 @@ function ProductDetailsContent() {
         <div className="sticky top-32 lg:top-36 space-y-8 flex flex-col justify-start lg:border-l lg:border-[#E4DFDE] lg:pl-12 xl:pl-16 pt-2 w-full">
           <div>
             <span className="text-primary font-bold uppercase tracking-[0.18em] mb-1.5 text-[10px] font-heading">{product.category}</span>
-            <h1 className="text-2xl md:text-3xl font-heading mb-4 leading-tight uppercase tracking-[0.18em]">{product.name}</h1>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-heading mb-3 md:mb-4 leading-tight uppercase tracking-[0.18em]">{product.name}</h1>
             
             <div className="flex items-center gap-6 mb-6 border-b border-[#E4DFDE] pb-4 font-body">
               <div className="flex items-center gap-1 text-primary">
@@ -145,7 +145,7 @@ function ProductDetailsContent() {
 
             <div className="mb-6 font-body">
               <div className="flex items-baseline gap-4">
-                <span className="text-3xl font-semibold text-primary tracking-tighter">₹{product.price.toLocaleString()}</span>
+                <span className="text-2xl md:text-3xl font-semibold text-primary tracking-tighter">₹{product.price.toLocaleString()}</span>
                 {product.discountPrice && (
                   <span className="text-lg text-neutral-300 line-through tracking-tighter">₹{product.discountPrice.toLocaleString()}</span>
                 )}
@@ -321,7 +321,7 @@ function ProductDetailsContent() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <p className="text-neutral-500 text-xs leading-[2] tracking-widest pt-4 font-body">
+                    <p className="text-neutral-500 text-[11px] md:text-xs leading-[1.8] md:leading-[2] tracking-widest pt-4 font-body">
                       {product.description} Every dynamic stitch and precise seam in this Volahi creation has been meticulously cataloged to fulfill premium high-fashion attributes.
                     </p>
                   </motion.div>
@@ -348,7 +348,7 @@ function ProductDetailsContent() {
                     className="overflow-hidden"
                   >
                     <div className="pt-4 space-y-4">
-                      <p className="text-neutral-500 text-xs leading-[2] tracking-widest font-body">
+                      <p className="text-neutral-500 text-[11px] md:text-xs leading-[1.8] md:leading-[2] tracking-widest font-body">
                         This couture piece is synthesized with premium <span className="text-primary font-bold">{product.material}</span>, selected specifically to ensure an editorial drape and lightweight luxury tactile sensation.
                       </p>
                       {product.features.length > 0 && (
@@ -382,7 +382,7 @@ function ProductDetailsContent() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <p className="text-neutral-500 text-xs leading-[2] tracking-widest pt-4 font-body">
+                    <p className="text-neutral-500 text-[11px] md:text-xs leading-[1.8] md:leading-[2] tracking-widest pt-4 font-body">
                       {product.careInstructions || 'Dry Clean recommended. Store in our custom garment breathable cloth bags on structured padded hangers to preserve delicate threads.'}
                     </p>
                   </motion.div>
@@ -495,7 +495,7 @@ function ProductDetailsContent() {
             <h2 className="text-2xl md:text-3xl font-heading uppercase tracking-[0.18em]">Similar Creations</h2>
             <Link href="/products" className="text-[10px] uppercase tracking-[0.18em] font-bold border-b border-primary pb-1">View All</Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 font-body">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-12 font-body">
             {relatedProducts.map((p) => (
               <Link 
                 key={p.id} 

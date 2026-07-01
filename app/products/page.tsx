@@ -74,7 +74,7 @@ function ProductCatalogContent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8 border-l-2 border-primary pl-8">
         <div>
-          <h1 className="text-5xl font-heading mb-4 uppercase tracking-[0.18em]">The Collection</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-heading mb-3 md:mb-4 uppercase tracking-[0.18em]">The Collection</h1>
           <p className="text-neutral-400 text-[10px] uppercase tracking-[0.18em] font-bold">Discover {filteredProducts.length} unique pieces curated for Volahi</p>
         </div>
         
