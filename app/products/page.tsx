@@ -275,9 +275,9 @@ function ProductCatalogContent() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   key={product.id}
-                  className="group relative border border-[#E4DFDE] bg-white p-4 transition-all duration-300 hover:border-primary rounded-none hover:shadow-md"
+                  className="group relative transition-all duration-300 rounded-none text-left"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-none">
+                  <div className="relative aspect-[4/5] overflow-hidden bg-[#FAFAF9] border border-[#E4DFDE] mb-3 rounded-none">
                     <Link href={`/products/detail?id=${product.id}`} className="block w-full h-full overflow-hidden rounded-none">
                       <img 
                         src={product.image} 
@@ -286,10 +286,10 @@ function ProductCatalogContent() {
                         style={{ objectPosition: product.imagePosition?.[0] ?? 'center 50%' }}
                       />
                     </Link>
-                    {/* Glassmorphic transparent "NEW" label */}
+                    {/* New In Badge */}
                     {(product.newArrival || product.discountPrice) && (
-                      <div className="absolute top-3 left-3 z-10 bg-white/25 backdrop-blur-md border border-white/40 text-[#1C1C1C] text-[8px] font-bold px-2.5 py-1 uppercase tracking-[0.2em] pointer-events-none select-none">
-                        NEW
+                      <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
+                        New in
                       </div>
                     )}
                     {/* Size Hover Overlay */}
@@ -301,28 +301,21 @@ function ProductCatalogContent() {
                         </span>
                       ))}
                     </div>
-                    <div className="absolute top-4 right-4 z-10">
+                    <div className="absolute top-3 right-3 z-10">
                       <button 
                         onClick={() => toggleWishlist(product.id)}
-                        className="bg-white/90 p-2.5 rounded-none border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
+                        className="bg-white/90 p-2 border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
                       >
-                        <Heart className={`w-4 h-4 transition-colors ${wishlist.includes(product.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
+                        <Heart className={`w-3.5 h-3.5 transition-colors ${wishlist.includes(product.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
                       </button>
                     </div>
                   </div>
-                  <div className="text-center space-y-2">
-                    <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-[0.18em]">{product.category}</p>
-                    <Link href={`/products/detail?id=${product.id}`} className="block font-heading text-[12px] font-semibold transition-all uppercase tracking-[0.18em] hover:text-accent">
+                  <div className="text-left mt-3 space-y-1">
+                    <Link href={`/products/detail?id=${product.id}`} className="block font-heading text-[11px] font-semibold transition-all uppercase tracking-[0.18em] text-[#1C1C1C] hover:text-primary leading-tight">
                       {product.name}
                     </Link>
-                    <div className="flex justify-between items-center pt-2">
-                      <span className="font-semibold text-accent tracking-tighter text-md">₹{product.price.toLocaleString()}</span>
-                      <button 
-                        onClick={(e) => handleAddToCart(e, product)}
-                        className="hidden md:block bg-primary text-white p-2.5 rounded-none hover:bg-accent transition-colors active:scale-95 cursor-pointer"
-                      >
-                        <ShoppingCart className="w-4 h-4" />
-                      </button>
+                    <div className="pt-0.5">
+                      <span className="font-body text-xs font-semibold text-primary tracking-wide">₹{product.price.toLocaleString()}</span>
                     </div>
                   </div>
                 </motion.div>

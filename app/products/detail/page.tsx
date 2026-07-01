@@ -500,33 +500,37 @@ function ProductDetailsContent() {
               <Link 
                 key={p.id} 
                 href={`/products/detail?id=${p.id}`} 
-                className="group block p-4 bg-white border border-[#E4DFDE] transition-all duration-300 rounded-none text-center hover:border-primary hover:shadow-md"
+                className="group block relative transition-all duration-300 rounded-none text-left"
               >
-                <div className="aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 relative rounded-none">
+                <div className="aspect-[4/5] overflow-hidden bg-[#FAFAF9] border border-[#E4DFDE] mb-3 relative rounded-none">
                   <img 
                     src={p.image} 
                     className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5] rounded-none" 
                     style={{ objectPosition: p.imagePosition?.[0] ?? 'center 50%' }}
                     alt={p.name} 
                   />
-                   {/* Glassmorphic transparent "NEW" label */}
+                   {/* New In Badge */}
                    {(p.newArrival || p.discountPrice) && (
-                     <div className="absolute top-3 left-3 z-10 bg-white/25 backdrop-blur-md border border-white/40 text-[#1C1C1C] text-[8px] font-bold px-2.5 py-1 uppercase tracking-[0.2em] pointer-events-none select-none">
-                       NEW
+                     <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
+                       New in
                      </div>
                    )}
                    {/* Size Hover Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-[#E4DFDE] flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none rounded-none">
-                    <span className="text-[7px] font-bold tracking-[0.18em] text-neutral-400 uppercase mr-1">Sizes:</span>
-                    {p.sizes.map((s: string) => (
-                      <span key={s} className="text-[8px] font-bold text-primary px-1.5 py-0.5 border border-[#E4DFDE] bg-slate-50 uppercase tracking-[0.18em] rounded-none">
-                        {getSizeWithNumber(s)}
-                      </span>
-                    ))}
+                   <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-[#E4DFDE] flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none rounded-none">
+                     <span className="text-[7px] font-bold tracking-[0.18em] text-neutral-400 uppercase mr-1">Sizes:</span>
+                     {p.sizes.map((s: string) => (
+                       <span key={s} className="text-[8px] font-bold text-primary px-1.5 py-0.5 border border-[#E4DFDE] bg-slate-50 uppercase tracking-[0.18em] rounded-none">
+                         {getSizeWithNumber(s)}
+                       </span>
+                     ))}
+                   </div>
+                </div>
+                <div className="text-left mt-3 space-y-1">
+                  <h3 className="font-heading text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1C1C1C] group-hover:text-primary transition-colors leading-tight">{p.name}</h3>
+                  <div className="pt-0.5">
+                    <span className="font-body text-xs font-semibold text-primary tracking-wide">₹{p.price.toLocaleString()}</span>
                   </div>
                 </div>
-                <h3 className="font-heading text-[12px] font-semibold mb-2 transition-all uppercase tracking-[0.18em] hover:text-accent truncate">{p.name}</h3>
-                <p className="font-semibold tracking-tighter text-accent">₹{p.price.toLocaleString()}</p>
               </Link>
             ))}
           </div>

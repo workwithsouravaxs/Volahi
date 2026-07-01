@@ -203,18 +203,18 @@ export default function Home() {
                   {featuredProducts.map((p) => (
                     <div 
                       key={p.id}
-                      className="group border border-[#E4DFDE] bg-white p-4 relative transition-all duration-300 hover:border-primary rounded-none hover:shadow-md"
+                      className="group relative transition-all duration-300 rounded-none text-left"
                     >
-                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-none">
+                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-[#FAFAF9] border border-[#E4DFDE] mb-3 rounded-none">
                         <img 
                           src={p.image} 
                           alt={p.name}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-none"
                         />
-                        {/* Glassmorphic transparent "NEW" label */}
+                        {/* New In Badge */}
                         {(p.newArrival || p.discountPrice) && (
-                          <div className="absolute top-3 left-3 z-10 bg-white/25 backdrop-blur-md border border-white/40 text-[#1C1C1C] text-[8px] font-bold px-2.5 py-1 uppercase tracking-[0.2em] pointer-events-none select-none">
-                            NEW
+                          <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
+                            New in
                           </div>
                         )}
                         {/* Size Hover Overlay */}
@@ -226,32 +226,25 @@ export default function Home() {
                             </span>
                           ))}
                         </div>
-                        <div className="absolute top-4 right-4 z-10">
+                        <div className="absolute top-3 right-3 z-10">
                           <button 
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               toggleWishlist(p.id);
                             }}
-                            className="bg-white/90 p-2.5 rounded-none border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
+                            className="bg-white/90 p-2 border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
                           >
-                            <Heart className={`w-4 h-4 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
+                            <Heart className={`w-3.5 h-3.5 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
                           </button>
                         </div>
                       </Link>
-                      <div className="text-center space-y-2">
-                        <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-[0.18em]">{p.category}</p>
-                        <Link href={`/products/detail?id=${p.id}`} className="block font-heading text-[12px] font-semibold transition-all uppercase tracking-[0.18em] hover:text-accent">
+                      <div className="text-left mt-3 space-y-1">
+                        <Link href={`/products/detail?id=${p.id}`} className="block font-heading text-[11px] font-semibold transition-all uppercase tracking-[0.18em] text-[#1C1C1C] hover:text-primary leading-tight">
                           {p.name}
                         </Link>
-                        <div className="flex justify-between items-center pt-2">
-                          <span className="font-semibold text-accent tracking-tighter text-md">₹{p.price.toLocaleString()}</span>
-                          <button 
-                            onClick={(e) => handleAddToCart(e, p)}
-                            className="hidden md:block bg-primary text-white p-2.5 rounded-none hover:bg-accent transition-colors active:scale-95 cursor-pointer"
-                          >
-                            <ShoppingCart className="w-4 h-4" />
-                          </button>
+                        <div className="pt-0.5">
+                          <span className="font-body text-xs font-semibold text-primary tracking-wide">₹{p.price.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -279,18 +272,18 @@ export default function Home() {
                   {bestSellers.map((p) => (
                     <div 
                       key={p.id}
-                      className="group border border-[#E4DFDE] bg-white p-4 relative transition-all duration-300 hover:border-primary rounded-none hover:shadow-md"
+                      className="group relative transition-all duration-300 rounded-none text-left"
                     >
-                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-none">
+                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-[#FAFAF9] border border-[#E4DFDE] mb-3 rounded-none">
                         <img 
                           src={p.image} 
                           alt={p.name}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-none"
                         />
-                        {/* Glassmorphic transparent "NEW" label */}
+                        {/* New In Badge */}
                         {(p.newArrival || p.discountPrice) && (
-                          <div className="absolute top-3 left-3 z-10 bg-white/25 backdrop-blur-md border border-white/40 text-[#1C1C1C] text-[8px] font-bold px-2.5 py-1 uppercase tracking-[0.2em] pointer-events-none select-none">
-                            NEW
+                          <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
+                            New in
                           </div>
                         )}
                         {/* Size Hover Overlay */}
@@ -302,32 +295,25 @@ export default function Home() {
                             </span>
                           ))}
                         </div>
-                        <div className="absolute top-4 right-4 z-10">
+                        <div className="absolute top-3 right-3 z-10">
                           <button 
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               toggleWishlist(p.id);
                             }}
-                            className="bg-white/90 p-2.5 rounded-none border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
+                            className="bg-white/90 p-2 border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
                           >
-                            <Heart className={`w-4 h-4 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
+                            <Heart className={`w-3.5 h-3.5 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
                           </button>
                         </div>
                       </Link>
-                      <div className="text-center space-y-2">
-                        <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-[0.18em]">{p.category}</p>
-                        <Link href={`/products/detail?id=${p.id}`} className="block font-heading text-[12px] font-semibold transition-all uppercase tracking-[0.18em] hover:text-accent">
+                      <div className="text-left mt-3 space-y-1">
+                        <Link href={`/products/detail?id=${p.id}`} className="block font-heading text-[11px] font-semibold transition-all uppercase tracking-[0.18em] text-[#1C1C1C] hover:text-primary leading-tight">
                           {p.name}
                         </Link>
-                        <div className="flex justify-between items-center pt-2">
-                          <span className="font-semibold text-accent tracking-tighter text-md">₹{p.price.toLocaleString()}</span>
-                          <button 
-                            onClick={(e) => handleAddToCart(e, p)}
-                            className="hidden md:block bg-primary text-white p-2.5 rounded-none hover:bg-accent transition-colors active:scale-95 cursor-pointer"
-                          >
-                            <ShoppingCart className="w-4 h-4" />
-                          </button>
+                        <div className="pt-0.5">
+                          <span className="font-body text-xs font-semibold text-primary tracking-wide">₹{p.price.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -355,18 +341,18 @@ export default function Home() {
                   {newArrivals.map((p) => (
                     <div 
                       key={p.id}
-                      className="group border border-[#E4DFDE] bg-white p-4 relative transition-all duration-300 hover:border-primary rounded-none hover:shadow-md"
+                      className="group relative transition-all duration-300 rounded-none text-left"
                     >
-                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-none">
+                      <Link href={`/products/detail?id=${p.id}`} className="block relative aspect-[4/5] overflow-hidden bg-[#FAFAF9] border border-[#E4DFDE] mb-3 rounded-none">
                         <img 
                           src={p.image} 
                           alt={p.name}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-none"
                         />
-                        {/* Glassmorphic transparent "NEW" label */}
+                        {/* New In Badge */}
                         {(p.newArrival || p.discountPrice) && (
-                          <div className="absolute top-3 left-3 z-10 bg-white/25 backdrop-blur-md border border-white/40 text-[#1C1C1C] text-[8px] font-bold px-2.5 py-1 uppercase tracking-[0.2em] pointer-events-none select-none">
-                            NEW
+                          <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
+                            New in
                           </div>
                         )}
                         {/* Size Hover Overlay */}
@@ -378,32 +364,25 @@ export default function Home() {
                             </span>
                           ))}
                         </div>
-                        <div className="absolute top-4 right-4 z-10">
+                        <div className="absolute top-3 right-3 z-10">
                           <button 
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               toggleWishlist(p.id);
                             }}
-                            className="bg-white/90 p-2.5 rounded-none border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
+                            className="bg-white/90 p-2 border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
                           >
-                            <Heart className={`w-4 h-4 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
+                            <Heart className={`w-3.5 h-3.5 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
                           </button>
                         </div>
                       </Link>
-                      <div className="text-center space-y-2">
-                        <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-[0.18em]">{p.category}</p>
-                        <Link href={`/products/detail?id=${p.id}`} className="block font-heading text-[12px] font-semibold transition-all uppercase tracking-[0.18em] hover:text-accent">
+                      <div className="text-left mt-3 space-y-1">
+                        <Link href={`/products/detail?id=${p.id}`} className="block font-heading text-[11px] font-semibold transition-all uppercase tracking-[0.18em] text-[#1C1C1C] hover:text-primary leading-tight">
                           {p.name}
                         </Link>
-                        <div className="flex justify-between items-center pt-2">
-                          <span className="font-semibold text-accent tracking-tighter text-md">₹{p.price.toLocaleString()}</span>
-                          <button 
-                            onClick={(e) => handleAddToCart(e, p)}
-                            className="hidden md:block bg-primary text-white p-2.5 rounded-none hover:bg-accent transition-colors active:scale-95 cursor-pointer"
-                          >
-                            <ShoppingCart className="w-4 h-4" />
-                          </button>
+                        <div className="pt-0.5">
+                          <span className="font-body text-xs font-semibold text-primary tracking-wide">₹{p.price.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
