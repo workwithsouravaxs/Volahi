@@ -117,19 +117,19 @@ function CustomerAuthContent() {
   };
 
   return (
-    <main className="min-h-screen bg-background relative overflow-hidden flex flex-col justify-center">
+    <main className="min-h-screen bg-background relative overflow-hidden flex flex-col justify-center font-body">
       <Navbar />
 
-      <div className="pt-32 pb-20 px-4 max-w-7xl mx-auto w-full flex items-center justify-center">
-        <div className="w-full max-w-5xl bg-white border border-neutral-100 shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[600px]">
+      <div className="pt-40 pb-20 px-4 max-w-7xl mx-auto w-full flex items-center justify-center">
+        <div className="w-full max-w-5xl bg-white border border-[#E4DFDE] rounded-none shadow-md overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[600px]">
           
           {/* Editorial Brand Half */}
-          <div className="md:col-span-6 relative bg-neutral-900 overflow-hidden hidden md:flex flex-col justify-between p-12 text-white">
+          <div className="md:col-span-6 relative bg-neutral-900 overflow-hidden hidden md:flex flex-col justify-between p-12 text-white font-heading">
             <div className="absolute inset-0 opacity-40">
               <img 
                 src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop" 
                 alt="Volahi Couture"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-none"
               />
             </div>
             
@@ -138,14 +138,14 @@ function CustomerAuthContent() {
             </div>
 
             <div className="relative z-10 max-w-sm">
-              <h2 className="text-4xl font-heading mb-6 leading-tight italic uppercase tracking-tighter">Become part of the Volahi Atelier</h2>
-              <p className="text-xs text-neutral-300 tracking-widest leading-relaxed">
+              <h2 className="text-3xl font-heading mb-6 leading-tight uppercase tracking-[0.18em]">Become part of the Volahi Atelier</h2>
+              <p className="text-xs text-neutral-300 tracking-widest leading-relaxed font-body">
                 Unlock complimentary white-glove deliveries, priority collection launches, and direct custom size allocations.
               </p>
             </div>
 
-            <div className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-1.5">
-              <Heart className="w-3.5 h-3.5 text-cta fill-cta" /> Premium Couture Lifestyle
+            <div className="relative z-10 text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 flex items-center gap-1.5 font-heading">
+              <Heart className="w-3.5 h-3.5 text-primary fill-primary" /> Premium Couture Lifestyle
             </div>
           </div>
 
@@ -153,29 +153,29 @@ function CustomerAuthContent() {
           <div className="md:col-span-6 p-8 sm:p-12 flex flex-col justify-center bg-white">
             
             {/* Tabs */}
-            <div className="flex gap-8 border-b border-neutral-100 mb-10">
+            <div className="flex gap-8 border-b border-[#E4DFDE] mb-10 font-heading">
               <button 
                 onClick={() => { setActiveTab('login'); setError(''); setSuccess(''); }}
-                className={`pb-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-all relative ${activeTab === 'login' ? 'text-primary border-b-2 border-primary' : 'text-neutral-400 hover:text-primary'}`}
+                className={`pb-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all relative cursor-pointer ${activeTab === 'login' ? 'text-primary border-b-2 border-primary' : 'text-neutral-400 hover:text-primary'}`}
               >
                 Sign In
               </button>
               <button 
                 onClick={() => { setActiveTab('signup'); setError(''); setSuccess(''); }}
-                className={`pb-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-all relative ${activeTab === 'signup' ? 'text-primary border-b-2 border-primary' : 'text-neutral-400 hover:text-primary'}`}
+                className={`pb-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all relative cursor-pointer ${activeTab === 'signup' ? 'text-primary border-b-2 border-primary' : 'text-neutral-400 hover:text-primary'}`}
               >
                 Create Account
               </button>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50/50 border border-red-100 text-red-700 text-xs font-semibold uppercase tracking-wider leading-relaxed text-center">
+              <div className="mb-6 p-4 bg-red-50/50 border border-red-100 text-red-700 text-xs font-semibold uppercase tracking-widest leading-relaxed text-center rounded-none font-body">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="mb-6 p-4 bg-green-50/50 border border-green-100 text-green-700 text-xs font-semibold uppercase tracking-wider leading-relaxed text-center">
+              <div className="mb-6 p-4 bg-green-50/50 border border-green-100 text-green-700 text-xs font-semibold uppercase tracking-widest leading-relaxed text-center rounded-none font-body">
                 {success}
               </div>
             )}
@@ -191,10 +191,10 @@ function CustomerAuthContent() {
                   className="space-y-6"
                 >
                   <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-2.5">
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5">
                       Email Address
                     </label>
-                    <div className="relative border-b border-neutral-200 py-1.5 focus-within:border-neutral-900 transition-all">
+                    <div className="relative border-b border-[#E4DFDE] py-1.5 focus-within:border-neutral-900 transition-all">
                       <Mail className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300" />
                       <input 
                         type="email" 
@@ -209,18 +209,18 @@ function CustomerAuthContent() {
 
                   <div>
                     <div className="flex justify-between items-center mb-2.5">
-                      <label className="block text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400">
+                      <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400">
                         Password
                       </label>
                       <button 
                         type="button"
                         onClick={() => setActiveTab('reset')}
-                        className="text-[9px] text-cta font-bold uppercase tracking-[0.2em] hover:underline"
+                        className="text-[9px] text-primary font-bold uppercase tracking-[0.18em] hover:underline cursor-pointer font-heading"
                       >
                         Forgot?
                       </button>
                     </div>
-                    <div className="relative border-b border-neutral-200 py-1.5 focus-within:border-neutral-900 transition-all">
+                    <div className="relative border-b border-[#E4DFDE] py-1.5 focus-within:border-neutral-900 transition-all">
                       <Lock className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300" />
                       <input 
                         type="password" 
@@ -236,17 +236,17 @@ function CustomerAuthContent() {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full bg-primary text-white py-4 font-bold text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all active:scale-[0.98] disabled:bg-neutral-300"
+                    className="w-full bg-primary text-white py-4 font-bold text-xs uppercase tracking-[0.18em] flex items-center justify-center gap-2 hover:bg-accent transition-all active:scale-95 disabled:bg-neutral-300 cursor-pointer font-heading rounded-none"
                   >
                     {isLoading ? 'VERIFYING CREDENTIALS...' : 'SIGN IN'} <ArrowRight className="w-4 h-4" />
                   </button>
 
-                  <p className="text-center text-[9px] text-neutral-400 font-bold uppercase tracking-widest">
+                  <p className="text-center text-[9px] text-neutral-400 font-bold uppercase tracking-widest font-body">
                     New to Volahi?{' '}
                     <button
                       type="button"
                       onClick={() => { setActiveTab('signup'); setError(''); }}
-                      className="text-cta hover:underline"
+                      className="text-primary hover:underline cursor-pointer font-semibold"
                     >
                       Create an Account
                     </button>
@@ -264,10 +264,10 @@ function CustomerAuthContent() {
                   className="space-y-6"
                 >
                   <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-2.5">
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5">
                       Your Full Name
                     </label>
-                    <div className="relative border-b border-neutral-200 py-1.5 focus-within:border-neutral-900 transition-all">
+                    <div className="relative border-b border-[#E4DFDE] py-1.5 focus-within:border-neutral-900 transition-all">
                       <User className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300" />
                       <input 
                         type="text" 
@@ -281,10 +281,10 @@ function CustomerAuthContent() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-2.5">
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5">
                       Email Address
                     </label>
-                    <div className="relative border-b border-neutral-200 py-1.5 focus-within:border-neutral-900 transition-all">
+                    <div className="relative border-b border-[#E4DFDE] py-1.5 focus-within:border-neutral-900 transition-all">
                       <Mail className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300" />
                       <input 
                         type="email" 
@@ -298,10 +298,10 @@ function CustomerAuthContent() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-2.5">
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5">
                       Phone Number
                     </label>
-                    <div className="relative border-b border-neutral-200 py-1.5 focus-within:border-neutral-900 transition-all">
+                    <div className="relative border-b border-[#E4DFDE] py-1.5 focus-within:border-neutral-900 transition-all">
                       <Phone className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300" />
                       <input 
                         type="tel" 
@@ -315,10 +315,10 @@ function CustomerAuthContent() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-2.5">
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5">
                       Choose Password
                     </label>
-                    <div className="relative border-b border-neutral-200 py-1.5 focus-within:border-neutral-900 transition-all">
+                    <div className="relative border-b border-[#E4DFDE] py-1.5 focus-within:border-neutral-900 transition-all">
                       <Lock className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300" />
                       <input 
                         type="password" 
@@ -335,17 +335,17 @@ function CustomerAuthContent() {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full bg-primary text-white py-4 font-bold text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all active:scale-[0.98] disabled:bg-neutral-300"
+                    className="w-full bg-primary text-white py-4 font-bold text-xs uppercase tracking-[0.18em] flex items-center justify-center gap-2 hover:bg-accent transition-all active:scale-95 disabled:bg-neutral-300 cursor-pointer font-heading rounded-none"
                   >
                     {isLoading ? 'CREATING ATELIER ACCOUNT...' : 'REGISTER ACCOUNT'} <ArrowRight className="w-4 h-4" />
                   </button>
 
-                  <p className="text-center text-[9px] text-neutral-400 font-bold uppercase tracking-widest">
+                  <p className="text-center text-[9px] text-neutral-400 font-bold uppercase tracking-widest font-body">
                     Already a patron?{' '}
                     <button
                       type="button"
                       onClick={() => { setActiveTab('login'); setError(''); }}
-                      className="text-cta hover:underline"
+                      className="text-primary hover:underline cursor-pointer font-semibold"
                     >
                       Sign In
                     </button>
@@ -360,17 +360,17 @@ function CustomerAuthContent() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
                   onSubmit={handleReset}
-                  className="space-y-6"
+                  className="space-y-6 font-body"
                 >
-                  <p className="text-xs text-neutral-500 tracking-widest leading-relaxed mb-6">
+                  <p className="text-xs text-neutral-500 tracking-widest leading-relaxed mb-6 font-body">
                     Enter the email registered with your Volahi profile. We will forward dynamic recovery steps to authorize resetting your security key.
                   </p>
 
                   <div>
-                    <label className="block text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-2.5">
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5">
                       Email Address
                     </label>
-                    <div className="relative border-b border-neutral-200 py-1.5 focus-within:border-neutral-900 transition-all">
+                    <div className="relative border-b border-[#E4DFDE] py-1.5 focus-within:border-neutral-900 transition-all">
                       <Mail className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300" />
                       <input 
                         type="email" 
@@ -387,14 +387,14 @@ function CustomerAuthContent() {
                     <button 
                       type="submit" 
                       disabled={isLoading}
-                      className="w-full bg-primary text-white py-4 font-bold text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all active:scale-[0.98] disabled:bg-neutral-300"
+                      className="w-full bg-primary text-white py-4 font-bold text-xs uppercase tracking-[0.18em] flex items-center justify-center gap-2 hover:bg-accent transition-all active:scale-95 disabled:bg-neutral-300 cursor-pointer font-heading rounded-none"
                     >
                       {isLoading ? 'DISPATCHING SECURE KEY...' : 'SEND RECOVERY LINK'} <ArrowRight className="w-4 h-4" />
                     </button>
                     <button 
                       type="button" 
                       onClick={() => { setActiveTab('login'); setError(''); setSuccess(''); }}
-                      className="text-[10px] text-neutral-400 font-bold uppercase tracking-[0.2em] hover:underline"
+                      className="text-[10px] text-neutral-400 font-bold uppercase tracking-[0.18em] hover:underline cursor-pointer font-heading"
                     >
                       Cancel and Return to Sign In
                     </button>
@@ -415,7 +415,7 @@ export default function CustomerAuth() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center font-body text-primary">
-        <div className="text-center font-heading text-xl uppercase tracking-widest animate-pulse">
+        <div className="text-center font-heading text-xl uppercase tracking-[0.18em] animate-pulse">
           Loading Authorization...
         </div>
       </div>

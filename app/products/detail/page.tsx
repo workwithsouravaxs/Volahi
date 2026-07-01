@@ -2,9 +2,9 @@
 
 import React, { useState, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
-import { useVolahiStore, Product } from '@/lib/store';
+import { useVolahiStore, getSizeWithNumber } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Heart, Star, Truck, ShieldCheck, ChevronRight, MessageSquare, Send, X as XIcon } from 'lucide-react';
+import { Heart, Star, Truck, ShieldCheck, ChevronRight, MessageSquare, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -18,9 +18,12 @@ function ProductDetailsContent() {
 
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
-  const [activeImage, setActiveImage] = useState(0);
-  const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'care'>('details');
   const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
+
+  // Collapsible Accordion States
+  const [narrativeOpen, setNarrativeOpen] = useState(true);
+  const [compositionOpen, setCompositionOpen] = useState(false);
+  const [careOpen, setCareOpen] = useState(false);
 
   // Review Form States
   const [reviewerName, setReviewerName] = useState('');
@@ -32,9 +35,9 @@ function ProductDetailsContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white font-body text-primary">
         <div className="text-center space-y-6">
-          <h1 className="text-3xl font-heading uppercase tracking-widest">Piece Not Found</h1>
-          <p className="text-neutral-400 text-xs tracking-widest">The requested couture piece does not exist in our collections.</p>
-          <Link href="/products" className="btn-primary inline-block">Back to Collection</Link>
+          <h1 className="text-2xl font-heading uppercase tracking-[0.18em]">Piece Not Found</h1>
+          <p className="text-neutral-400 text-xs tracking-widest font-body">The requested couture piece does not exist in our collections.</p>
+          <Link href="/products" className="btn-primary inline-block rounded-none font-heading">Back to Collection</Link>
         </div>
       </div>
     );
@@ -81,9 +84,9 @@ function ProductDetailsContent() {
   };
 
   return (
-    <div className="pt-28 pb-24 max-w-7xl mx-auto px-4">
+    <div className="pt-36 md:pt-40 pb-24 max-w-7xl mx-auto px-4 font-body">
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-4 text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-300 mb-8">
+      <div className="flex items-center gap-4 text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-300 mb-8 font-heading">
         <Link href="/" className="hover:text-primary transition-colors">Volahi</Link>
         <ChevronRight className="w-3 h-3" />
         <Link href="/products" className="hover:text-primary transition-colors">Couture</Link>
@@ -91,83 +94,81 @@ function ProductDetailsContent() {
         <span className="text-primary">{product.name}</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[45%_55%] gap-12 xl:gap-16 mb-24">
-        {/* Visual Gallery */}
-        <div className="flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[520px] lg:h-[600px] w-full">
-          {/* Thumbnail Rail */}
-          {product.images.length > 1 && (
-            <div className="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto no-scrollbar touch-pan-x md:touch-pan-y w-full md:w-24 flex-shrink-0 h-auto md:h-full pb-2 md:pb-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-12 xl:gap-20 mb-24 items-start">
+        
+        {/* ==================== LEFT COLUMN: VISUAL GALLERY ==================== */}
+        <div>
+          {/* Desktop stacked layout (large scrolling screens, Nishorama Eleena Corset style) */}
+          <div className="hidden lg:flex flex-col gap-6 w-full">
+            {product.images.map((img, i) => (
+              <div key={i} className="w-full bg-[#FAFAF9] border border-[#E4DFDE] overflow-hidden aspect-[3/4]">
+                <img 
+                  src={img} 
+                  className="w-full h-full object-cover transition-opacity duration-300" 
+                  alt={`${product.name} view ${i + 1}`} 
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile horizontal swipe carousel */}
+          <div className="lg:hidden w-full relative">
+            <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full gap-4 pb-4">
               {product.images.map((img, i) => (
-                <div 
-                  key={i}
-                  className={`w-20 h-20 md:w-24 md:h-24 flex-shrink-0 cursor-pointer border bg-white transition-all rounded-[6px] overflow-hidden ${
-                    activeImage === i 
-                      ? 'border-[#921c52] shadow-[0_0_8px_rgba(146,28,82,0.15)] scale-[1.02]' 
-                      : 'border-[#E8DED3] hover:border-[#a5295b] opacity-70 hover:opacity-100'
-                  }`}
-                  onClick={() => setActiveImage(i)}
-                >
+                <div key={i} className="w-full aspect-[3/4] flex-shrink-0 snap-center bg-[#FAFAF9] border border-[#E4DFDE] overflow-hidden relative">
                   <img src={img} className="w-full h-full object-cover" alt="" />
+                  <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white text-[9px] px-2.5 py-1 font-bold tracking-widest font-heading uppercase select-none">
+                    {i + 1} / {product.images.length}
+                  </div>
                 </div>
               ))}
             </div>
-          )}
-          
-          {/* Main Image Container */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex-1 w-full h-[360px] md:h-full flex items-center justify-center bg-white border border-[#E8DED3] rounded-lg shadow-sm p-4 md:p-5 overflow-hidden"
-          >
-            <img 
-              src={product.images[activeImage] || product.image} 
-              className="max-w-[90%] max-h-[90%] w-auto h-auto object-contain object-center"
-              alt={product.name}
-            />
-          </motion.div>
+          </div>
         </div>
 
-        {/* Product Specifications & Purchases */}
-        <div className="flex flex-col justify-start lg:border-l lg:border-[#E8DED3] lg:pl-12 xl:pl-16 pt-2">
-          <span className="text-cta font-bold uppercase tracking-[0.4em] mb-1.5 text-[10px]">{product.category}</span>
-          <h1 className="text-3xl md:text-4xl font-heading mb-4 leading-tight uppercase tracking-tighter">{product.name}</h1>
-          
-          <div className="flex items-center gap-6 mb-6 border-b border-[#E8DED3] pb-4">
-            <div className="flex items-center gap-1 text-primary">
-              {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-3.5 h-3.5 fill-current" />)}
+        {/* ==================== RIGHT COLUMN: STICKY METADATA PANEL ==================== */}
+        <div className="sticky top-32 lg:top-36 space-y-8 flex flex-col justify-start lg:border-l lg:border-[#E4DFDE] lg:pl-12 xl:pl-16 pt-2 w-full">
+          <div>
+            <span className="text-primary font-bold uppercase tracking-[0.18em] mb-1.5 text-[10px] font-heading">{product.category}</span>
+            <h1 className="text-2xl md:text-3xl font-heading mb-4 leading-tight uppercase tracking-[0.18em]">{product.name}</h1>
+            
+            <div className="flex items-center gap-6 mb-6 border-b border-[#E4DFDE] pb-4 font-body">
+              <div className="flex items-center gap-1 text-primary">
+                {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-3.5 h-3.5 fill-current" />)}
+              </div>
+              <span className="text-neutral-400 text-[9px] uppercase tracking-[0.18em] font-bold font-heading">Verified Couture</span>
+              <span className="text-neutral-200">/</span>
+              <span className={`text-[9px] uppercase tracking-[0.18em] font-bold font-heading ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                {product.stock > 0 ? `In Stock (${product.stock})` : 'Out of Stock'}
+              </span>
             </div>
-            <span className="text-neutral-400 text-[9px] uppercase tracking-[0.2em] font-bold">Verified Couture</span>
-            <span className="text-neutral-200">/</span>
-            <span className={`text-[9px] uppercase tracking-[0.2em] font-bold ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-              {product.stock > 0 ? `In Stock (${product.stock})` : 'Out of Stock'}
-            </span>
-          </div>
 
-          <div className="mb-6">
-            <div className="flex items-baseline gap-4">
-              <span className="text-4xl font-medium text-primary tracking-tighter">₹{product.price.toLocaleString()}</span>
-              {product.discountPrice && (
-                <span className="text-xl text-neutral-300 line-through tracking-tighter">₹{product.discountPrice.toLocaleString()}</span>
-              )}
+            <div className="mb-6 font-body">
+              <div className="flex items-baseline gap-4">
+                <span className="text-3xl font-semibold text-primary tracking-tighter">₹{product.price.toLocaleString()}</span>
+                {product.discountPrice && (
+                  <span className="text-lg text-neutral-300 line-through tracking-tighter">₹{product.discountPrice.toLocaleString()}</span>
+                )}
+              </div>
+              <p className="text-neutral-400 text-[9px] uppercase tracking-[0.18em] font-bold mt-2 font-heading">
+                {product.deliveryFeeEnabled 
+                  ? `Delivery: ₹${product.deliveryFeeAmount} ${product.deliveryFeeNotes ? `(${product.deliveryFeeNotes})` : ''}`
+                  : "Free Delivery"
+                }
+              </p>
             </div>
-            <p className="text-neutral-400 text-[9px] uppercase tracking-[0.3em] font-bold mt-2">
-              {product.deliveryFeeEnabled 
-                ? `Delivery: ₹${product.deliveryFeeAmount} ${product.deliveryFeeNotes ? `(${product.deliveryFeeNotes})` : ''}`
-                : "Free Delivery"
-              }
-            </p>
           </div>
 
           {/* Colors Selection */}
           {product.colors.length > 0 && product.colors[0] !== 'Natural' && (
-            <div className="mb-5">
-              <h3 className="text-[9px] font-bold uppercase tracking-[0.4em] mb-3">Color: {selectedColor || 'Select Option'}</h3>
+            <div className="font-body">
+              <h3 className="text-[9px] font-bold uppercase tracking-[0.18em] mb-3 font-heading">Color: {selectedColor || 'Select Option'}</h3>
               <div className="flex flex-wrap gap-2.5">
                 {product.colors.map(color => (
                   <button 
                     key={color}
                     onClick={() => setSelectedColor(color)}
-                    className={`h-10 px-4 border text-[10px] font-bold uppercase tracking-wider transition-all rounded ${selectedColor === color ? 'border-primary bg-primary text-white' : 'bg-white border-[#E8DED3] text-neutral-400 hover:border-neutral-300'}`}
+                    className={`h-10 px-4 border text-[10px] font-bold uppercase tracking-wider transition-all rounded-none cursor-pointer ${selectedColor === color ? 'border-primary bg-primary text-white' : 'bg-white border-[#E4DFDE] text-neutral-400 hover:border-neutral-300'}`}
                   >
                     {color}
                   </button>
@@ -177,12 +178,12 @@ function ProductDetailsContent() {
           )}
 
           {/* Size Selection */}
-          <div className="mb-6">
+          <div className="font-body">
             <div className="flex justify-between items-center mb-4 relative">
-              <h3 className="text-[9px] font-bold uppercase tracking-[0.4em]">Choose Size</h3>
+              <h3 className="text-[9px] font-bold uppercase tracking-[0.18em] font-heading">Choose Size: {selectedSize ? getSizeWithNumber(selectedSize) : 'Select Option'}</h3>
               <button 
                 onClick={() => setIsSizeChartOpen(!isSizeChartOpen)} 
-                className="text-[9px] text-cta font-bold uppercase tracking-[0.2em] border-b border-cta relative z-10"
+                className="text-[9px] text-primary font-bold uppercase tracking-[0.18em] border-b border-primary relative z-10 font-heading cursor-pointer"
               >
                 Size Chart
               </button>
@@ -198,13 +199,13 @@ function ProductDetailsContent() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 top-full mt-2 w-[384px] max-w-[90vw] h-[288px] bg-white border border-neutral-200 shadow-xl p-4 z-50 overflow-auto text-primary"
+                      className="absolute right-0 top-full mt-2 w-[384px] max-w-[90vw] h-[288px] bg-white border border-[#E4DFDE] p-4 z-50 overflow-auto text-primary rounded-none shadow-md"
                     >
-                      <div className="flex justify-between items-center pb-2 border-b border-neutral-200 mb-3">
-                        <span className="text-[8px] font-bold uppercase tracking-widest text-[#1e0d0e]">Size Guide (Inches)</span>
+                      <div className="flex justify-between items-center pb-2 border-b border-[#E4DFDE] mb-3">
+                        <span className="text-[8px] font-bold uppercase tracking-[0.18em] text-[#1C1C1C] font-heading">Size Guide (Inches)</span>
                         <button 
                           onClick={() => setIsSizeChartOpen(false)}
-                          className="text-[10px] font-bold text-neutral-400 hover:text-neutral-600 uppercase tracking-widest"
+                          className="text-[10px] font-bold text-neutral-400 hover:text-neutral-600 uppercase tracking-[0.18em] font-heading cursor-pointer"
                         >
                           ✕ Close
                         </button>
@@ -212,7 +213,7 @@ function ProductDetailsContent() {
                       
                       <table className="w-full text-left text-[9px] tracking-wider border-collapse">
                         <thead>
-                          <tr className="border-b border-neutral-200 text-[8px] font-bold uppercase tracking-widest text-neutral-400">
+                          <tr className="border-b border-[#E4DFDE] text-[8px] font-bold uppercase tracking-widest text-neutral-400">
                             <th className="py-2 px-2">Size</th>
                             <th className="py-2 px-2">Bust</th>
                             <th className="py-2 px-2">Waist</th>
@@ -221,7 +222,7 @@ function ProductDetailsContent() {
                             <th className="py-2 px-2">Sleeves</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-100 text-[9px] text-neutral-600">
+                        <tbody className="divide-y divide-neutral-100 text-[9px] text-neutral-600 font-body">
                           {[
                             { size: 'XS', bust: '38', waist: '33', hips: '39', shoulder: '15.5', sleeves: '24' },
                             { size: 'S', bust: '40', waist: '35', hips: '42', shoulder: '16', sleeves: '24' },
@@ -245,41 +246,44 @@ function ProductDetailsContent() {
                 )}
               </AnimatePresence>
             </div>
+            
             <div className="flex flex-wrap gap-3">
               {product.sizes.map(size => (
                 <button 
                   key={size}
                   onClick={() => setSelectedSize(size)}
-                  className={`min-w-[56px] h-12 border font-bold text-[10px] transition-all flex items-center justify-center px-4 rounded ${selectedSize === size ? 'border-primary bg-primary text-white' : 'bg-white border-[#E8DED3] text-neutral-400 hover:border-neutral-300'}`}
+                  className={`min-w-[56px] h-12 border font-bold text-[10px] transition-all flex items-center justify-center px-4 rounded-none cursor-pointer ${selectedSize === size ? 'border-primary bg-primary text-white' : 'bg-white border-[#E4DFDE] text-neutral-400 hover:border-neutral-300'}`}
                 >
-                  {size}
+                  {getSizeWithNumber(size)}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex gap-4 mb-6">
+          {/* Add to Cart & Wishlist */}
+          <div className="flex gap-4 font-body">
             <button 
               onClick={handleAcquire}
               disabled={product.stock <= 0}
-              className="flex-1 btn-primary py-4.5 bg-primary text-white font-bold text-xs uppercase tracking-widest hover:bg-neutral-800 disabled:bg-neutral-200 transition-all rounded"
+              className="flex-1 btn-primary py-4.5 bg-primary text-white font-bold text-xs uppercase tracking-[0.18em] hover:bg-accent disabled:bg-neutral-200 transition-all rounded-none cursor-pointer font-heading"
             >
               {product.stock > 0 ? 'Add to Cart' : 'Sold Out'}
             </button>
             <button 
               onClick={() => toggleWishlist(product.id)}
-              className="w-16 h-16 border border-[#E8DED3] flex items-center justify-center hover:bg-neutral-50 transition-colors group rounded"
+              className="w-16 h-16 border border-[#E4DFDE] flex items-center justify-center hover:bg-[#FAFAF9] transition-colors group rounded-none cursor-pointer"
             >
               <Heart className={`w-5 h-5 transition-colors ${wishlist.includes(product.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 pt-6 border-t border-[#E8DED3]">
+          {/* Delivery & Security Accents */}
+          <div className="grid grid-cols-1 gap-4 pt-6 border-t border-[#E4DFDE] font-body">
             <div className="flex items-center gap-5">
-              <div className="p-3 border border-[#E8DED3] rounded"><Truck className="w-4 h-4 text-neutral-900" /></div>
+              <div className="p-3 border border-[#E4DFDE] rounded-none"><Truck className="w-4 h-4 text-neutral-900" /></div>
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.2em]">Estimated Delivery</p>
-                <p className="text-[9px] text-neutral-400 tracking-widest mt-1">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] font-heading">Estimated Delivery</p>
+                <p className="text-[9px] text-neutral-400 tracking-widest mt-1 font-body">
                   {product.deliveryFeeEnabled 
                     ? `Insured courier delivery for ₹${product.deliveryFeeAmount}${product.deliveryFeeNotes ? ` (${product.deliveryFeeNotes})` : ''}`
                     : "Complimentary Free Delivery & packaging"
@@ -288,102 +292,132 @@ function ProductDetailsContent() {
               </div>
             </div>
             <div className="flex items-center gap-5">
-              <div className="p-3 border border-[#E8DED3] rounded"><ShieldCheck className="w-4 h-4 text-neutral-900" /></div>
-              <div><p className="text-[9px] font-bold uppercase tracking-[0.2em]">Authenticity Guaranteed</p><p className="text-[9px] text-neutral-400 tracking-widest mt-1">Each creation arrives certified premium Volahi</p></div>
+              <div className="p-3 border border-[#E4DFDE] rounded-none"><ShieldCheck className="w-4 h-4 text-neutral-900" /></div>
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] font-heading">Authenticity Guaranteed</p>
+                <p className="text-[9px] text-neutral-400 tracking-widest mt-1 font-body">Each creation arrives certified premium Volahi</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ==================== COLLAPSIBLE ACCORDION ROWS ==================== */}
+          <div className="pt-8 border-t border-[#E4DFDE] space-y-4 font-body">
+            
+            {/* Row 1: Narrative */}
+            <div className="border-b border-[#E4DFDE] pb-4">
+              <button 
+                onClick={() => setNarrativeOpen(!narrativeOpen)}
+                className="w-full flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.18em] font-heading text-left cursor-pointer"
+              >
+                <span>Silhouette Narrative</span>
+                <span className="text-xs font-semibold">{narrativeOpen ? '—' : '+'}</span>
+              </button>
+              <AnimatePresence initial={false}>
+                {narrativeOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="text-neutral-500 text-xs leading-[2] tracking-widest pt-4 font-body">
+                      {product.description} Every dynamic stitch and precise seam in this Volahi creation has been meticulously cataloged to fulfill premium high-fashion attributes.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Row 2: Composition */}
+            <div className="border-b border-[#E4DFDE] pb-4">
+              <button 
+                onClick={() => setCompositionOpen(!compositionOpen)}
+                className="w-full flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.18em] font-heading text-left cursor-pointer"
+              >
+                <span>Composition & Features</span>
+                <span className="text-xs font-semibold">{compositionOpen ? '—' : '+'}</span>
+              </button>
+              <AnimatePresence initial={false}>
+                {compositionOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 space-y-4">
+                      <p className="text-neutral-500 text-xs leading-[2] tracking-widest font-body">
+                        This couture piece is synthesized with premium <span className="text-primary font-bold">{product.material}</span>, selected specifically to ensure an editorial drape and lightweight luxury tactile sensation.
+                      </p>
+                      {product.features.length > 0 && (
+                        <ul className="space-y-2 text-[9px] uppercase tracking-[0.18em] font-bold text-neutral-400">
+                          {product.features.map((f, idx) => (
+                            <li key={idx}><span className="text-primary mr-3">•</span> {f}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Row 3: Care Guide */}
+            <div className="border-b border-[#E4DFDE] pb-4">
+              <button 
+                onClick={() => setCareOpen(!careOpen)}
+                className="w-full flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.18em] font-heading text-left cursor-pointer"
+              >
+                <span>Atelier Care Guide</span>
+                <span className="text-xs font-semibold">{careOpen ? '—' : '+'}</span>
+              </button>
+              <AnimatePresence initial={false}>
+                {careOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="text-neutral-500 text-xs leading-[2] tracking-widest pt-4 font-body">
+                      {product.careInstructions || 'Dry Clean recommended. Store in our custom garment breathable cloth bags on structured padded hangers to preserve delicate threads.'}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Content Tabs */}
-      <div className="mb-40">
-        <div className="flex gap-12 border-b border-neutral-100 mb-10 text-[9px] font-bold uppercase tracking-[0.4em]">
-          <button 
-            onClick={() => setActiveTab('details')}
-            className={`py-4 transition-all relative ${activeTab === 'details' ? 'border-b-2 border-primary text-primary' : 'text-neutral-400'}`}
-          >
-            The Narrative
-          </button>
-          <button 
-            onClick={() => setActiveTab('specs')}
-            className={`py-4 transition-all relative ${activeTab === 'specs' ? 'border-b-2 border-primary text-primary' : 'text-neutral-400'}`}
-          >
-            Composition details
-          </button>
-          <button 
-            onClick={() => setActiveTab('care')}
-            className={`py-4 transition-all relative ${activeTab === 'care' ? 'border-b-2 border-primary text-primary' : 'text-neutral-400'}`}
-          >
-            Couture Care
-          </button>
-        </div>
-
-        <div className="max-w-4xl">
-          {activeTab === 'details' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-              <div className="space-y-4">
-                <h4 className="text-2xl font-heading uppercase tracking-tighter">silhouette narrative</h4>
-                <p className="text-neutral-500 text-xs leading-[2] tracking-widest">
-                  {product.description} Every dynamic stitch and precise seam in this Volahi creation has been meticulously cataloged to fulfill premium high-fashion attributes.
-                </p>
-              </div>
-              {product.features.length > 0 && (
-                <div className="space-y-4">
-                  <h4 className="text-2xl font-heading uppercase tracking-tighter">Artisanal Details</h4>
-                  <ul className="space-y-3.5 text-[9px] uppercase tracking-[0.2em] font-bold text-neutral-400">
-                    {product.features.map((f, idx) => (
-                      <li key={idx}><span className="text-cta mr-3">•</span> {f}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'specs' && (
-            <div className="space-y-4">
-              <h4 className="text-2xl font-heading uppercase tracking-tighter">Material & Composition</h4>
-              <p className="text-neutral-500 text-xs leading-[2] tracking-widest max-w-xl">
-                This couture piece is synthesized with premium <span className="text-primary font-bold">{product.material}</span>, selected specifically to ensure an editorial drape and lightweight luxury tactile sensation.
-              </p>
-            </div>
-          )}
-
-          {activeTab === 'care' && (
-            <div className="space-y-4">
-              <h4 className="text-2xl font-heading uppercase tracking-tighter">Specialist Care Guide</h4>
-              <p className="text-neutral-500 text-xs leading-[2] tracking-widest max-w-xl">
-                {product.careInstructions || 'Dry Clean recommended. Store in our custom garment breathable cloth bags on structured padded hangers to preserve delicate threads.'}
-              </p>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* ==================== REVIEWS & RATING MODULE ==================== */}
-      <div className="mb-40 border-t border-neutral-100 pt-16">
+      <div className="mb-40 border-t border-[#E4DFDE] pt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           
           {/* Reviews list */}
           <div className="lg:col-span-7 space-y-8">
-            <h3 className="text-2xl font-heading uppercase tracking-tighter mb-8 flex items-center gap-2">
+            <h3 className="text-xl md:text-2xl font-heading uppercase tracking-[0.18em] mb-8 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-neutral-600" /> Dynamic Reviews ({product.reviews?.length || 0})
             </h3>
 
             <div className="space-y-6">
               {product.reviews && product.reviews.length > 0 ? (
                 product.reviews.map((r, idx) => (
-                  <div key={idx} className="border-b border-neutral-50 pb-6 space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+                  <div key={idx} className="border-b border-neutral-100 pb-6 space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider font-heading">
                       <span className="text-primary">{r.reviewerName}</span>
-                      <span className="text-neutral-300 font-bold uppercase tracking-widest">{r.date}</span>
+                      <span className="text-neutral-300 font-bold uppercase tracking-[0.18em]">{r.date}</span>
                     </div>
                     <div className="flex gap-0.5 text-yellow-500 py-1">
                       {Array.from({ length: r.rating }).map((_, i) => (
                         <Star key={i} className="w-3.5 h-3.5 fill-current" />
                       ))}
                     </div>
-                    <p className="text-xs text-neutral-500 tracking-widest leading-relaxed">{r.comment}</p>
+                    <p className="text-xs text-neutral-500 tracking-widest leading-relaxed font-body">{r.comment}</p>
                   </div>
                 ))
               ) : (
@@ -393,22 +427,22 @@ function ProductDetailsContent() {
           </div>
 
           {/* Leave a review Form */}
-          <div className="lg:col-span-5 bg-secondary p-8 border border-neutral-100 shadow-sm rounded">
-            <h4 className="text-xl font-heading uppercase tracking-tighter mb-6">Leave an Atelier Review</h4>
+          <div className="lg:col-span-5 bg-secondary p-8 border border-[#E4DFDE] rounded-none font-body">
+            <h4 className="text-lg md:text-xl font-heading uppercase tracking-[0.18em] mb-6">Leave an Atelier Review</h4>
             
             {reviewSuccess && (
-              <div className="mb-6 p-4 bg-green-50/50 border border-green-100 text-green-700 text-xs font-semibold uppercase tracking-wider leading-relaxed text-center">
+              <div className="mb-6 p-4 bg-green-50/50 border border-green-100 text-green-700 text-xs font-semibold uppercase tracking-widest leading-relaxed text-center font-body">
                 {reviewSuccess}
               </div>
             )}
 
             <form onSubmit={handleReviewSubmit} className="space-y-6">
               <div>
-                <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Reviewer Name</label>
+                <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5 font-heading">Reviewer Name</label>
                 <input 
                   type="text" 
                   required 
-                  className="w-full bg-white border border-neutral-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary uppercase tracking-widest"
+                  className="w-full bg-white border border-[#E4DFDE] rounded-none p-2.5 text-xs font-semibold focus:outline-none focus:border-primary uppercase tracking-widest"
                   placeholder="e.g. Charlotte Dupont"
                   value={reviewerName}
                   onChange={(e) => setReviewerName(e.target.value)}
@@ -416,9 +450,9 @@ function ProductDetailsContent() {
               </div>
 
               <div>
-                <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Acquisition rating</label>
+                <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5 font-heading">Acquisition rating</label>
                 <select 
-                  className="w-full bg-white border border-neutral-200 rounded p-2.5 text-xs font-bold focus:outline-none focus:border-primary"
+                  className="w-full bg-white border border-[#E4DFDE] rounded-none p-2.5 text-xs font-bold focus:outline-none focus:border-primary font-heading cursor-pointer"
                   value={rating}
                   onChange={(e) => setRating(Number(e.target.value))}
                 >
@@ -431,11 +465,11 @@ function ProductDetailsContent() {
               </div>
 
               <div>
-                <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">Your review statement</label>
+                <label className="block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400 mb-2.5 font-heading">Your review statement</label>
                 <textarea 
                   required 
                   rows={4}
-                  className="w-full bg-white border border-neutral-200 rounded p-2.5 text-xs font-semibold focus:outline-none focus:border-primary tracking-wide"
+                  className="w-full bg-white border border-[#E4DFDE] rounded-none p-2.5 text-xs font-semibold focus:outline-none focus:border-primary tracking-wide"
                   placeholder="Reflect on the styling, silhouette drape, fabric tactile quality..."
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
@@ -444,7 +478,7 @@ function ProductDetailsContent() {
 
               <button 
                 type="submit" 
-                className="w-full bg-primary text-white py-3.5 font-bold text-[10px] uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors rounded"
+                className="w-full bg-primary text-white py-3.5 font-bold text-[10px] uppercase tracking-[0.18em] flex items-center justify-center gap-2 hover:bg-accent transition-colors rounded-none cursor-pointer font-heading"
               >
                 Publish Review <Send className="w-3.5 h-3.5" />
               </button>
@@ -456,37 +490,37 @@ function ProductDetailsContent() {
 
       {/* Related Creations */}
       {relatedProducts.length > 0 && (
-        <div>
-          <div className="flex items-end justify-between mb-16 border-b border-neutral-100 pb-4">
-            <h2 className="text-3xl font-heading uppercase tracking-tighter">Similar Creations</h2>
-            <Link href="/products" className="text-[10px] uppercase tracking-[0.3em] font-bold border-b border-primary pb-1">View All</Link>
+        <div className="font-heading">
+          <div className="flex items-end justify-between mb-16 border-b border-[#E4DFDE] pb-4">
+            <h2 className="text-2xl md:text-3xl font-heading uppercase tracking-[0.18em]">Similar Creations</h2>
+            <Link href="/products" className="text-[10px] uppercase tracking-[0.18em] font-bold border-b border-primary pb-1">View All</Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 font-body">
             {relatedProducts.map((p) => (
               <Link 
                 key={p.id} 
                 href={`/products/detail?id=${p.id}`} 
-                className="group block p-4 bg-white border border-[#E8DED3] shadow-[0_6px_18px_rgba(0,0,0,0.05)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary hover:shadow-[0_12px_24px_rgba(30,13,14,0.08)] rounded-[5px] text-center"
+                className="group block p-4 bg-white border border-[#E4DFDE] transition-all duration-300 rounded-none text-center hover:border-primary hover:shadow-md"
               >
-                <div className="aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 relative rounded-t-[5px]">
+                <div className="aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 relative rounded-none">
                   <img 
                     src={p.image} 
-                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5] rounded-t-[5px]" 
+                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5] rounded-none" 
                     style={{ objectPosition: p.imagePosition?.[0] ?? 'center 50%' }}
                     alt={p.name} 
                   />
                   {/* Size Hover Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2 px-3 border-t border-neutral-100 flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none">
-                    <span className="text-[7px] font-bold tracking-widest text-neutral-400 uppercase mr-1">Sizes:</span>
+                  <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-[#E4DFDE] flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none rounded-none">
+                    <span className="text-[7px] font-bold tracking-[0.18em] text-neutral-400 uppercase mr-1">Sizes:</span>
                     {p.sizes.map((s: string) => (
-                      <span key={s} className="text-[8px] font-bold text-primary px-1.5 py-0.5 border border-neutral-200 bg-slate-50 uppercase tracking-widest">
-                        {s}
+                      <span key={s} className="text-[8px] font-bold text-primary px-1.5 py-0.5 border border-[#E4DFDE] bg-slate-50 uppercase tracking-[0.18em] rounded-none">
+                        {getSizeWithNumber(s)}
                       </span>
                     ))}
                   </div>
                 </div>
-                <h3 className="font-heading text-[12px] mb-2 group-hover:italic transition-all uppercase tracking-tighter">{p.name}</h3>
-                <p className="font-semibold tracking-tighter text-slate-800">₹{p.price.toLocaleString()}</p>
+                <h3 className="font-heading text-[12px] font-semibold mb-2 transition-all uppercase tracking-[0.18em] hover:text-accent truncate">{p.name}</h3>
+                <p className="font-semibold tracking-tighter text-accent">₹{p.price.toLocaleString()}</p>
               </Link>
             ))}
           </div>
@@ -500,7 +534,7 @@ export default function ProductDetailPage() {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
-      <Suspense fallback={<div className="pt-40 text-center font-heading text-3xl uppercase tracking-widest animate-pulse">Entering Volahi Collection...</div>}>
+      <Suspense fallback={<div className="pt-40 text-center font-heading text-3xl uppercase tracking-[0.18em] animate-pulse">Entering Volahi Collection...</div>}>
         <ProductDetailsContent />
       </Suspense>
     </main>

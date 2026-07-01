@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useVolahiStore, Product, Banner, Order } from '@/lib/store';
+import { useVolahiStore, Product, Banner, Order, getSizeWithNumber } from '@/lib/store';
 import { uploadProductImage, uploadBannerImage, verifyAdmin } from '@/lib/supabase';
 import {
   LayoutDashboard,
@@ -1047,7 +1047,7 @@ export default function AdminDashboard() {
                           <div className="space-y-1">
                             {o.items.map((item, idx) => (
                               <div key={idx}>
-                                {item.product.name} ({item.selectedSize}/{item.selectedColor}) x {item.quantity}
+                                {item.product.name} ({getSizeWithNumber(item.selectedSize)}/{item.selectedColor}) x {item.quantity}
                               </div>
                             ))}
                           </div>
@@ -2399,7 +2399,7 @@ export default function AdminDashboard() {
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex items-center justify-between text-[11px] text-neutral-600">
                             <span className="font-semibold">{item.product.name}</span>
-                            <span className="text-neutral-400">{item.selectedSize} / {item.selectedColor} × {item.quantity}</span>
+                            <span className="text-neutral-400">{getSizeWithNumber(item.selectedSize)} / {item.selectedColor} × {item.quantity}</span>
                           </div>
                         ))}
                       </div>

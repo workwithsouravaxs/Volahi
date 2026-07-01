@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useVolahiStore } from '@/lib/store';
+import { useVolahiStore, getSizeWithNumber } from '@/lib/store';
 import Navbar from '@/components/Navbar';
 import { ShoppingBag, User, LogOut, CheckCircle, Package, Truck, Compass, Sparkles, Phone } from 'lucide-react';
 import Link from 'next/link';
@@ -204,7 +204,7 @@ export default function CustomerProfile() {
                           <div className="flex-1">
                             <p className="text-xs font-bold text-slate-800 uppercase tracking-tight">{item.product.name}</p>
                             <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-widest mt-1">
-                              Allocation: {item.selectedSize} / {item.selectedColor} x {item.quantity}
+                              Allocation: {getSizeWithNumber(item.selectedSize)} / {item.selectedColor} x {item.quantity}
                             </p>
                           </div>
                           <span className="text-xs font-bold text-slate-900">₹{item.product.price.toLocaleString()}</span>

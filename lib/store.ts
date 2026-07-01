@@ -589,3 +589,28 @@ export const useVolahiStore = create<VolahiStore>()(
     }
   )
 );
+
+export function getSizeWithNumber(size: string): string {
+  const upperSize = size.toUpperCase().trim();
+  switch (upperSize) {
+    case 'XXS':
+      return 'XXS (6)';
+    case 'XS':
+      return 'XS (8)';
+    case 'S':
+      return 'S (10)';
+    case 'M':
+      return 'M (12)';
+    case 'L':
+      return 'L (14)';
+    case 'XL':
+      return 'XL (16)';
+    case 'XXL':
+      return 'XXL (18)';
+    case 'XXXL':
+    case '3XL':
+      return '3XL (20)';
+    default:
+      return size;
+  }
+}

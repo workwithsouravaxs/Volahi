@@ -24,23 +24,23 @@ export default function Logo({
     switch (variant) {
       case 'light':
         return {
-          birdBody: 'fill-[#f2eae0]',
+          birdBody: 'fill-[#FAFAF9]',
           birdDetails: 'fill-[#ffffff]',
-          wordmark: 'fill-[#f2eae0]',
+          wordmark: 'fill-[#FAFAF9]',
         };
       case 'dark':
         return {
-          birdBody: 'fill-[#921c52]',
-          birdDetails: 'fill-[#1e0d0e]',
-          wordmark: 'fill-[#921c52]',
+          birdBody: 'fill-[#482922]',
+          birdDetails: 'fill-[#1C1C1C]',
+          wordmark: 'fill-[#482922]',
         };
       case 'default':
       default:
         return {
-          birdBody: 'fill-[#921c52]',
-          birdDetails: 'fill-[#f2eae0]',
-          birdAccent: 'fill-[#a5295b]',
-          wordmark: 'fill-[#921c52]',
+          birdBody: 'fill-[#482922]',
+          birdDetails: 'fill-[#FAFAF9]',
+          birdAccent: 'fill-[#1C1C1C]',
+          wordmark: 'fill-[#482922]',
         };
     }
   };

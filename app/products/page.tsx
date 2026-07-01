@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { useVolahiStore } from '@/lib/store';
+import { useVolahiStore, getSizeWithNumber } from '@/lib/store';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, ShoppingCart, Heart, Search, X } from 'lucide-react';
 import Link from 'next/link';
@@ -74,12 +74,12 @@ function ProductCatalogContent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8 border-l-2 border-primary pl-8">
         <div>
-          <h1 className="text-6xl font-heading mb-4 uppercase tracking-tighter">The Collection</h1>
-          <p className="text-neutral-400 text-[10px] uppercase tracking-[0.4em] font-bold">Discover {filteredProducts.length} unique pieces curated for Volahi</p>
+          <h1 className="text-5xl font-heading mb-4 uppercase tracking-[0.18em]">The Collection</h1>
+          <p className="text-neutral-400 text-[10px] uppercase tracking-[0.18em] font-bold">Discover {filteredProducts.length} unique pieces curated for Volahi</p>
         </div>
         
         <div className="flex items-center gap-8">
-          <div className="relative border-b border-neutral-200 py-1 transition-all focus-within:border-primary">
+          <div className="relative border-b border-[#E4DFDE] py-1 transition-all focus-within:border-primary">
             <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <input 
               type="text" 
@@ -91,7 +91,7 @@ function ProductCatalogContent() {
           </div>
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${isFilterOpen ? 'text-cta' : 'text-primary'}`}
+            className={`flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] font-bold transition-all ${isFilterOpen ? 'text-accent' : 'text-primary'}`}
           >
             Filters <SlidersHorizontal className="w-4 h-4" />
           </button>
@@ -105,7 +105,7 @@ function ProductCatalogContent() {
             className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
             onClick={() => setIsFilterOpen(false)}
           />
-          <div className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white shadow-2xl overflow-y-auto p-8 space-y-10">
+          <div className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white shadow-md rounded-none overflow-y-auto p-8 space-y-10">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-neutral-500">Refine</span>
               <button onClick={() => setIsFilterOpen(false)} className="text-neutral-400 hover:text-primary transition-colors">
@@ -136,7 +136,7 @@ function ProductCatalogContent() {
                 <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400 mb-6">Sizes</h3>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => setSelectedSize('All')} className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedSize === 'All' ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}>All</button>
-                  {allAvailableSizes.map(size => (<button key={size} onClick={() => setSelectedSize(size)} className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedSize === size ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}>{size}</button>))}
+                  {allAvailableSizes.map(size => (<button key={size} onClick={() => setSelectedSize(size)} className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedSize === size ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}>{getSizeWithNumber(size)}</button>))}
                 </div>
               </div>
             )}
@@ -152,7 +152,7 @@ function ProductCatalogContent() {
             )}
             {/* Reset */}
             <div className="pt-4 border-t border-neutral-100">
-              <button onClick={() => { setSelectedCategory('All'); setPriceRange(150000); setSearchQuery(''); setSelectedSize('All'); setSelectedColor('All'); }} className="text-[9px] font-bold uppercase tracking-[0.4em] text-cta hover:underline">Reset Selection</button>
+              <button onClick={() => { setSelectedCategory('All'); setPriceRange(150000); setSearchQuery(''); setSelectedSize('All'); setSelectedColor('All'); }} className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary hover:underline cursor-pointer">Reset Selection</button>
             </div>
           </div>
         </div>
@@ -217,7 +217,7 @@ function ProductCatalogContent() {
                     onClick={() => setSelectedSize(size)}
                     className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedSize === size ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}
                   >
-                    {size}
+                    {getSizeWithNumber(size)}
                   </button>
                 ))}
               </div>
@@ -258,7 +258,7 @@ function ProductCatalogContent() {
                 setSelectedSize('All');
                 setSelectedColor('All');
               }}
-              className="text-[9px] font-bold uppercase tracking-[0.4em] text-cta hover:underline"
+              className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary hover:underline cursor-pointer"
             >
               Reset Selection
             </button>
@@ -275,45 +275,45 @@ function ProductCatalogContent() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   key={product.id}
-                  className="group relative border border-[#E8DED3] bg-white p-4 shadow-[0_6px_18px_rgba(0,0,0,0.05)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary hover:shadow-[0_12px_24px_rgba(30,13,14,0.08)] rounded-[5px]"
+                  className="group relative border border-[#E4DFDE] bg-white p-4 transition-all duration-300 hover:border-primary rounded-none hover:shadow-md"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-t-[5px]">
-                    <Link href={`/products/detail?id=${product.id}`} className="block w-full h-full overflow-hidden rounded-t-[5px]">
+                  <div className="relative aspect-[4/5] overflow-hidden bg-neutral-50 mb-6 rounded-none">
+                    <Link href={`/products/detail?id=${product.id}`} className="block w-full h-full overflow-hidden rounded-none">
                       <img 
                         src={product.image} 
                         alt={product.name}
-                        className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5] rounded-t-[5px]"
+                        className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5] rounded-none"
                         style={{ objectPosition: product.imagePosition?.[0] ?? 'center 50%' }}
                       />
                     </Link>
                     {/* Size Hover Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-neutral-100 flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none">
-                      <span className="text-[7px] font-bold tracking-widest text-neutral-400 uppercase mr-1">Sizes:</span>
+                    <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm py-2.5 px-3 border-t border-[#E4DFDE] flex flex-wrap gap-1 justify-center items-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none rounded-none">
+                      <span className="text-[7px] font-bold tracking-[0.18em] text-neutral-400 uppercase mr-1">Sizes:</span>
                       {product.sizes.map((s: string) => (
-                        <span key={s} className="text-[8px] font-bold text-primary px-1.5 py-0.5 border border-neutral-200 bg-slate-50 uppercase tracking-widest">
-                          {s}
+                        <span key={s} className="text-[8px] font-bold text-primary px-1.5 py-0.5 border border-[#E4DFDE] bg-slate-50 uppercase tracking-[0.18em] rounded-none">
+                          {getSizeWithNumber(s)}
                         </span>
                       ))}
                     </div>
                     <div className="absolute top-4 right-4 z-10">
                       <button 
                         onClick={() => toggleWishlist(product.id)}
-                        className="bg-white/90 p-2.5 rounded shadow-sm hover:bg-white transition-colors"
+                        className="bg-white/90 p-2.5 rounded-none border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
                       >
                         <Heart className={`w-4 h-4 transition-colors ${wishlist.includes(product.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
                       </button>
                     </div>
                   </div>
                   <div className="text-center space-y-2">
-                    <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-[0.3em]">{product.category}</p>
-                    <Link href={`/products/detail?id=${product.id}`} className="block font-heading text-[12px] hover:italic transition-all uppercase tracking-tighter">
+                    <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-[0.18em]">{product.category}</p>
+                    <Link href={`/products/detail?id=${product.id}`} className="block font-heading text-[12px] font-semibold transition-all uppercase tracking-[0.18em] hover:text-accent">
                       {product.name}
                     </Link>
                     <div className="flex justify-between items-center pt-2">
-                      <span className="font-semibold text-slate-800 tracking-tighter text-md">₹{product.price.toLocaleString()}</span>
+                      <span className="font-semibold text-accent tracking-tighter text-md">₹{product.price.toLocaleString()}</span>
                       <button 
                         onClick={(e) => handleAddToCart(e, product)}
-                        className="bg-primary text-white p-2.5 rounded hover:bg-cta transition-colors active:scale-95"
+                        className="bg-primary text-white p-2.5 rounded-none hover:bg-accent transition-colors active:scale-95 cursor-pointer"
                       >
                         <ShoppingCart className="w-4 h-4" />
                       </button>

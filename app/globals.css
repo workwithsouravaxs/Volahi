@@ -1,20 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #921c52; /* Volahi Premium Plum/Burgundy */
-  --color-secondary: #F6F1EB; /* Luxury Alternate Background */
-  --color-cta: #921c52; /* Plum CTA */
-  --color-accent: #a5295b; /* Medium Accent Plum */
-  --color-background: #FAF7F2; /* Luxury Primary Background */
-  --color-text: #1e0d0e; /* Dark Neutral Text */
-  --color-border: #E8DED3; /* Brand Border color */
+  --color-primary: #482922; /* Nishorama Terracotta/Reddish-Brown */
+  --color-secondary: #FAFAF9; /* Nishorama Off-White Panels */
+  --color-cta: #482922; /* Terracotta CTA */
+  --color-accent: #1C1C1C; /* Charcoal Black Accent */
+  --color-background: #FFFFFF; /* Pure White Primary Background */
+  --color-text: #1C1C1C; /* Charcoal Black text for readability */
+  --color-border: #E4DFDE; /* Nishorama Muted Gray-Brown Border */
 
-  --font-heading: var(--font-poppins), sans-serif;
-  --font-body: var(--font-poppins), sans-serif;
-  --shadow-sm: 0 1px 2px rgba(30, 13, 14, 0.05);
-  --shadow-md: 0 4px 6px rgba(30, 13, 14, 0.05);
-  --shadow-lg: 0 10px 15px rgba(146, 28, 82, 0.08);
-  --shadow-xl: 0 20px 25px rgba(146, 28, 82, 0.1);
+  --font-heading: var(--font-instrument-sans), sans-serif;
+  --font-body: var(--font-nunito), sans-serif;
+  
+  --shadow-sm: 0 1px 2px rgba(72, 41, 34, 0.05);
+  --shadow-md: 0 4px 6px rgba(72, 41, 34, 0.05);
+  --shadow-lg: 0 10px 15px rgba(72, 41, 34, 0.08);
+  --shadow-xl: 0 20px 25px rgba(72, 41, 34, 0.1);
+
+  /* Enforce 0px radius globally in Tailwind */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
 }
 
 @layer base {
@@ -23,45 +33,50 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading tracking-tight;
+    @apply font-heading uppercase tracking-[0.18em];
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/90 backdrop-blur-sm border border-[#E8DED3] transition-all duration-500;
+    @apply bg-white border border-[#E4DFDE] transition-all duration-300;
+    border-radius: 0px !important;
   }
 
   .btn-primary {
-    @apply bg-primary text-white px-10 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 cursor-pointer hover:bg-cta active:scale-95;
+    @apply bg-primary text-white px-8 py-3.5 font-heading text-[11px] font-semibold uppercase tracking-[0.18em] transition-all duration-200 cursor-pointer hover:bg-accent active:scale-95;
+    border-radius: 0px !important;
   }
 
   .btn-secondary {
-    @apply bg-transparent text-primary border border-primary px-10 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 cursor-pointer hover:bg-primary hover:text-white active:scale-95;
+    @apply bg-transparent text-primary border border-primary px-8 py-3.5 font-heading text-[11px] font-semibold uppercase tracking-[0.18em] transition-all duration-200 cursor-pointer hover:bg-primary hover:text-white active:scale-95;
+    border-radius: 0px !important;
   }
 
   .input-field {
-    @apply px-4 py-3 border border-neutral-200 focus:outline-none focus:border-primary transition-all duration-300;
+    @apply px-4 py-3 border border-[#E4DFDE] focus:outline-none focus:border-primary transition-all duration-200 font-body text-sm;
+    border-radius: 0px !important;
   }
 
-  /* Default Roundness Enforcement (10px corners, can be overridden) */
-  .rounded, .btn-primary, .btn-secondary, .input-field, button, input, select, textarea, .glass-card {
-    border-radius: 10px;
+  /* Default Roundness Enforcement (0px corners for Nishorama Style) */
+  .rounded, button, input, select, textarea, .glass-card, [class*="rounded-"]:not(.rounded-full) {
+    border-radius: 0px !important;
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar in Nishorama Terracotta color */
 ::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #FAF7F2;
+  background: #FAFAF9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #921c52; /* Plum Scrollbar */
+  background: #482922; 
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a5295b;
+  background: #634943;
 }
 
 /* Hide scrollbar utility */
