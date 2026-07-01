@@ -319,7 +319,7 @@ function ProductCatalogContent() {
                       <span className="font-semibold text-accent tracking-tighter text-md">₹{product.price.toLocaleString()}</span>
                       <button 
                         onClick={(e) => handleAddToCart(e, product)}
-                        className="bg-primary text-white p-2.5 rounded-none hover:bg-accent transition-colors active:scale-95 cursor-pointer"
+                        className="hidden md:block bg-primary text-white p-2.5 rounded-none hover:bg-accent transition-colors active:scale-95 cursor-pointer"
                       >
                         <ShoppingCart className="w-4 h-4" />
                       </button>
