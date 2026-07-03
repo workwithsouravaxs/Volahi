@@ -213,8 +213,8 @@ export default function Home() {
                         />
                         {/* New In Badge */}
                         {(p.newArrival || p.discountPrice) && (
-                          <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
-                            New in
+                          <div className="absolute top-0 left-0 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-1 border-r border-b border-[#E4DFDE] tracking-widest uppercase select-none">
+                            New
                           </div>
                         )}
                         {/* Size Hover Overlay */}
@@ -225,18 +225,6 @@ export default function Home() {
                               {getSizeWithNumber(s)}
                             </span>
                           ))}
-                        </div>
-                        <div className="absolute top-3 right-3 z-10">
-                          <button 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              toggleWishlist(p.id);
-                            }}
-                            className="bg-white/90 p-2 border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
-                          >
-                            <Heart className={`w-3.5 h-3.5 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
-                          </button>
                         </div>
                       </Link>
                       <div className="text-left mt-3 space-y-1">
@@ -282,8 +270,8 @@ export default function Home() {
                         />
                         {/* New In Badge */}
                         {(p.newArrival || p.discountPrice) && (
-                          <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
-                            New in
+                          <div className="absolute top-0 left-0 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-1 border-r border-b border-[#E4DFDE] tracking-widest uppercase select-none">
+                            New
                           </div>
                         )}
                         {/* Size Hover Overlay */}
@@ -294,18 +282,6 @@ export default function Home() {
                               {getSizeWithNumber(s)}
                             </span>
                           ))}
-                        </div>
-                        <div className="absolute top-3 right-3 z-10">
-                          <button 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              toggleWishlist(p.id);
-                            }}
-                            className="bg-white/90 p-2 border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
-                          >
-                            <Heart className={`w-3.5 h-3.5 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
-                          </button>
                         </div>
                       </Link>
                       <div className="text-left mt-3 space-y-1">
@@ -351,8 +327,8 @@ export default function Home() {
                         />
                         {/* New In Badge */}
                         {(p.newArrival || p.discountPrice) && (
-                          <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
-                            New in
+                          <div className="absolute top-0 left-0 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-1 border-r border-b border-[#E4DFDE] tracking-widest uppercase select-none">
+                            New
                           </div>
                         )}
                         {/* Size Hover Overlay */}
@@ -363,18 +339,6 @@ export default function Home() {
                               {getSizeWithNumber(s)}
                             </span>
                           ))}
-                        </div>
-                        <div className="absolute top-3 right-3 z-10">
-                          <button 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              toggleWishlist(p.id);
-                            }}
-                            className="bg-white/90 p-2 border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
-                          >
-                            <Heart className={`w-3.5 h-3.5 transition-colors ${wishlist.includes(p.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
-                          </button>
                         </div>
                       </Link>
                       <div className="text-left mt-3 space-y-1">

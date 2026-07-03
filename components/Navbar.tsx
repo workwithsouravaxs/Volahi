@@ -64,7 +64,7 @@ export default function Navbar() {
 
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0 z-10 flex items-center">
               <Link href="/" className="flex items-center" onClick={closeMobile}>
-                <Logo iconClassName="w-8 h-8" wordmarkClassName="h-4.5 w-auto" />
+                <Logo showIcon={false} iconClassName="w-8 h-8" wordmarkClassName="h-6.5 w-auto md:h-4.5" />
               </Link>
             </div>
             
@@ -150,7 +150,7 @@ export default function Navbar() {
               >
                 {/* Drawer Top logo and close */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-[#E4DFDE]">
-                  <Logo iconClassName="w-6 h-6" wordmarkClassName="h-3.5 w-auto" />
+                  <Logo showIcon={false} iconClassName="w-6 h-6" wordmarkClassName="h-5.5 w-auto md:h-3.5" />
                   <button
                     onClick={closeMobile}
                     className="w-8 h-8 flex items-center justify-center rounded-none hover:bg-[#FAFAF9] text-[#1C1C1C] transition-colors cursor-pointer"

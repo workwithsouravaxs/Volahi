@@ -25,11 +25,17 @@
   --radius-xl: 0px;
   --radius-2xl: 0px;
   --radius-3xl: 0px;
+
+  /* Global font weight adjustments */
+  --font-weight-bold: 600;
+  --font-weight-semibold: 500;
+  --font-weight-medium: 400;
+  --font-weight-normal: 300;
 }
 
 @layer base {
   body {
-    @apply bg-background text-text font-body antialiased;
+    @apply bg-background text-text font-body antialiased font-light;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -44,12 +50,12 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-white px-8 py-3.5 font-heading text-[11px] font-semibold uppercase tracking-[0.18em] transition-all duration-200 cursor-pointer hover:bg-accent active:scale-95;
+    @apply bg-primary text-white px-8 py-3.5 font-heading text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 cursor-pointer hover:bg-accent active:scale-95;
     border-radius: 0px !important;
   }
 
   .btn-secondary {
-    @apply bg-transparent text-primary border border-primary px-8 py-3.5 font-heading text-[11px] font-semibold uppercase tracking-[0.18em] transition-all duration-200 cursor-pointer hover:bg-primary hover:text-white active:scale-95;
+    @apply bg-transparent text-primary border border-primary px-8 py-3.5 font-heading text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 cursor-pointer hover:bg-primary hover:text-white active:scale-95;
     border-radius: 0px !important;
   }
 

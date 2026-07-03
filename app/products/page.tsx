@@ -11,7 +11,7 @@ import { useSearchParams } from 'next/navigation';
 function ProductCatalogContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
-  
+
   const { products, toggleWishlist, wishlist, addToCart, categories } = useVolahiStore();
 
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
@@ -31,7 +31,7 @@ function ProductCatalogContent() {
 
   // Derive unique colors and sizes from active products in the store
   const activeProducts = products.filter(p => p.status === 'Active');
-  
+
   const allAvailableColors = useMemo(() => {
     const colors = new Set<string>();
     activeProducts.forEach(p => p.colors.forEach(c => colors.add(c)));
@@ -47,13 +47,13 @@ function ProductCatalogContent() {
   const filteredProducts = useMemo(() => {
     return activeProducts.filter(p => {
       const matchCategory = selectedCategory === 'All' || p.category === selectedCategory;
-      const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchPrice = p.price <= priceRange;
       const matchSize = selectedSize === 'All' || p.allSizesAvailable || p.sizes.includes(selectedSize);
       const matchColor = selectedColor === 'All' || p.colors.includes(selectedColor);
-      
+
       return matchCategory && matchSearch && matchPrice && matchSize && matchColor;
     });
   }, [activeProducts, selectedCategory, searchQuery, priceRange, selectedSize, selectedColor]);
@@ -77,19 +77,19 @@ function ProductCatalogContent() {
           <h1 className="text-2xl sm:text-3xl md:text-5xl font-heading mb-3 md:mb-4 uppercase tracking-[0.18em]">The Collection</h1>
           <p className="text-neutral-400 text-[10px] uppercase tracking-[0.18em] font-bold">Discover {filteredProducts.length} unique pieces curated for Volahi</p>
         </div>
-        
+
         <div className="flex items-center gap-8">
           <div className="relative border-b border-[#E4DFDE] py-1 transition-all focus-within:border-primary">
             <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-            <input 
-              type="text" 
-              placeholder="SEARCH PIECES" 
+            <input
+              type="text"
+              placeholder="SEARCH PIECES"
               className="bg-transparent border-none focus:outline-none text-[10px] font-bold tracking-widest pl-8 w-48 lg:w-64 placeholder:text-neutral-300 uppercase"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button 
+          <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={`flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] font-bold transition-all ${isFilterOpen ? 'text-accent' : 'text-primary'}`}
           >
@@ -101,7 +101,7 @@ function ProductCatalogContent() {
       {/* Mobile Filter Overlay */}
       {isFilterOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div 
+          <div
             className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
             onClick={() => setIsFilterOpen(false)}
           />
@@ -165,14 +165,14 @@ function ProductCatalogContent() {
           <div>
             <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400 mb-6">Categories</h3>
             <div className="flex flex-col gap-3.5">
-              <button 
+              <button
                 onClick={() => setSelectedCategory('All')}
                 className={`text-left text-[10px] font-bold uppercase tracking-[0.2em] transition-all pb-1.5 border-b ${selectedCategory === 'All' ? 'border-primary text-primary' : 'border-transparent text-neutral-400 hover:text-primary'}`}
               >
                 All Creations
               </button>
               {categories.map(cat => (
-                <button 
+                <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`text-left text-[10px] font-bold uppercase tracking-[0.2em] transition-all pb-1.5 border-b ${selectedCategory === cat ? 'border-primary text-primary' : 'border-transparent text-neutral-400 hover:text-primary'}`}
@@ -189,10 +189,10 @@ function ProductCatalogContent() {
               <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400">Price Threshold</h3>
               <span className="text-[10px] font-bold text-cta">₹{priceRange.toLocaleString()}</span>
             </div>
-            <input 
-              type="range" 
-              min="1000" 
-              max="250000" 
+            <input
+              type="range"
+              min="1000"
+              max="250000"
               step="1000"
               value={priceRange}
               onChange={(e) => setPriceRange(parseInt(e.target.value))}
@@ -205,14 +205,14 @@ function ProductCatalogContent() {
             <div>
               <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400 mb-6">Sizes</h3>
               <div className="flex flex-wrap gap-2">
-                <button 
+                <button
                   onClick={() => setSelectedSize('All')}
                   className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedSize === 'All' ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}
                 >
                   All
                 </button>
                 {allAvailableSizes.map(size => (
-                  <button 
+                  <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
                     className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedSize === size ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}
@@ -229,14 +229,14 @@ function ProductCatalogContent() {
             <div>
               <h3 className="text-[10px] uppercase tracking-[0.5em] font-bold text-neutral-400 mb-6">Colors</h3>
               <div className="flex flex-wrap gap-2">
-                <button 
+                <button
                   onClick={() => setSelectedColor('All')}
                   className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedColor === 'All' ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}
                 >
                   All
                 </button>
                 {allAvailableColors.map(color => (
-                  <button 
+                  <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
                     className={`px-3 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-all ${selectedColor === color ? 'bg-primary text-white border-primary' : 'bg-transparent text-neutral-400 hover:border-neutral-300'}`}
@@ -250,7 +250,7 @@ function ProductCatalogContent() {
 
           {/* Reset Filters */}
           <div className="pt-8 border-t border-neutral-100">
-            <button 
+            <button
               onClick={() => {
                 setSelectedCategory('All');
                 setPriceRange(150000);
@@ -270,7 +270,7 @@ function ProductCatalogContent() {
           {filteredProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-16">
               {filteredProducts.map((product) => (
-                <motion.div 
+                <motion.div
                   layout
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -279,8 +279,8 @@ function ProductCatalogContent() {
                 >
                   <div className="relative aspect-[4/5] overflow-hidden bg-[#FAFAF9] border border-[#E4DFDE] mb-3 rounded-none">
                     <Link href={`/products/detail?id=${product.id}`} className="block w-full h-full overflow-hidden rounded-none">
-                      <img 
-                        src={product.image} 
+                      <img
+                        src={product.image}
                         alt={product.name}
                         className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105 aspect-[4/5] rounded-none"
                         style={{ objectPosition: product.imagePosition?.[0] ?? 'center 50%' }}
@@ -288,8 +288,8 @@ function ProductCatalogContent() {
                     </Link>
                     {/* New In Badge */}
                     {(product.newArrival || product.discountPrice) && (
-                      <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
-                        New in
+                      <div className="absolute top-0 left-0 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-1 border-r border-b border-[#E4DFDE] tracking-widest uppercase select-none">
+                        New
                       </div>
                     )}
                     {/* Size Hover Overlay */}
@@ -300,14 +300,6 @@ function ProductCatalogContent() {
                           {getSizeWithNumber(s)}
                         </span>
                       ))}
-                    </div>
-                    <div className="absolute top-3 right-3 z-10">
-                      <button 
-                        onClick={() => toggleWishlist(product.id)}
-                        className="bg-white/90 p-2 border border-neutral-100 hover:bg-white transition-colors cursor-pointer"
-                      >
-                        <Heart className={`w-3.5 h-3.5 transition-colors ${wishlist.includes(product.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
-                      </button>
                     </div>
                   </div>
                   <div className="text-left mt-3 space-y-1">
@@ -325,7 +317,7 @@ function ProductCatalogContent() {
             <div className="py-40 text-center border border-dashed border-neutral-200">
               <h3 className="text-2xl font-heading mb-4 uppercase tracking-widest">No matching pieces</h3>
               <p className="text-neutral-400 text-xs tracking-widest mb-10">Adjust your selection to explore other couture pieces.</p>
-              <button 
+              <button
                 onClick={() => {
                   setSelectedCategory('All');
                   setPriceRange(150000);

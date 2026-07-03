@@ -19,6 +19,7 @@ function ProductDetailsContent() {
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   // Collapsible Accordion States
   const [narrativeOpen, setNarrativeOpen] = useState(true);
@@ -30,6 +31,16 @@ function ProductDetailsContent() {
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSuccess, setReviewSuccess] = useState('');
+
+  const handleCarouselScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const scrollLeft = container.scrollLeft;
+    const width = container.clientWidth;
+    if (width > 0) {
+      const index = Math.round(scrollLeft / width);
+      setActiveImageIndex(index);
+    }
+  };
 
   if (!product) {
     return (
@@ -113,14 +124,25 @@ function ProductDetailsContent() {
 
           {/* Mobile horizontal swipe carousel */}
           <div className="lg:hidden w-full relative">
-            <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full gap-4 pb-4">
+            <div 
+              onScroll={handleCarouselScroll}
+              className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full gap-4 pb-4"
+            >
               {product.images.map((img, i) => (
                 <div key={i} className="w-full aspect-[3/4] flex-shrink-0 snap-center bg-[#FAFAF9] border border-[#E4DFDE] overflow-hidden relative">
                   <img src={img} className="w-full h-full object-cover" alt="" />
-                  <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white text-[9px] px-2.5 py-1 font-bold tracking-widest font-heading uppercase select-none">
-                    {i + 1} / {product.images.length}
-                  </div>
                 </div>
+              ))}
+            </div>
+            {/* Dots navigation inside a rounded container */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-black/65 backdrop-blur-md px-3 py-1.5 rounded-full flex gap-1.5 items-center">
+              {product.images.map((_, i) => (
+                <span 
+                  key={i}
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                    activeImageIndex === i ? 'bg-white w-3' : 'bg-white/40'
+                  }`}
+                />
               ))}
             </div>
           </div>
@@ -265,7 +287,7 @@ function ProductDetailsContent() {
             <button 
               onClick={handleAcquire}
               disabled={product.stock <= 0}
-              className="flex-1 btn-primary py-4.5 bg-primary text-white font-bold text-xs uppercase tracking-[0.18em] hover:bg-accent disabled:bg-neutral-200 transition-all rounded-none cursor-pointer font-heading"
+              className="flex-1 btn-primary py-4.5 bg-primary text-white font-medium text-xs uppercase tracking-[0.18em] hover:bg-accent disabled:bg-neutral-200 transition-all rounded-none cursor-pointer font-heading"
             >
               {product.stock > 0 ? 'Add to Cart' : 'Sold Out'}
             </button>
@@ -273,7 +295,7 @@ function ProductDetailsContent() {
               onClick={() => toggleWishlist(product.id)}
               className="w-16 h-16 border border-[#E4DFDE] flex items-center justify-center hover:bg-[#FAFAF9] transition-colors group rounded-none cursor-pointer"
             >
-              <Heart className={`w-5 h-5 transition-colors ${wishlist.includes(product.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} />
+              <Heart className={`w-5 h-5 transition-colors ${wishlist.includes(product.id) ? 'text-red-500 fill-red-500' : 'text-neutral-400'}`} strokeWidth={1.5} />
             </button>
           </div>
 
@@ -321,7 +343,7 @@ function ProductDetailsContent() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <p className="text-neutral-500 text-[11px] md:text-xs leading-[1.8] md:leading-[2] tracking-widest pt-4 font-body">
+                    <p className="text-neutral-500 text-[11px] md:text-xs leading-[1.8] md:leading-[2] tracking-[0.16em] pt-4 font-body">
                       {product.description} Every dynamic stitch and precise seam in this Volahi creation has been meticulously cataloged to fulfill premium high-fashion attributes.
                     </p>
                   </motion.div>
@@ -511,8 +533,8 @@ function ProductDetailsContent() {
                   />
                    {/* New In Badge */}
                    {(p.newArrival || p.discountPrice) && (
-                     <div className="absolute top-2.5 left-2.5 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-0.5 tracking-widest uppercase select-none">
-                       New in
+                     <div className="absolute top-0 left-0 z-10 bg-white text-[#1C1C1C] text-[8px] font-bold px-2 py-1 border-r border-b border-[#E4DFDE] tracking-widest uppercase select-none">
+                       New
                      </div>
                    )}
                    {/* Size Hover Overlay */}
